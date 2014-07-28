@@ -114,7 +114,7 @@ class TestScenario(manager.NetworkScenarioTest):
         if mynetwork.get('router'):
             router = self._get_router(mynetwork['tenant_id'])
         for mysubnet in mynetwork['subnets']:
-            subnet = self._create_subnet(network, cidr=mysubnet["cidr"])
+            subnet = self._create_custom_subnet(network, mysubnet)
             subnets.append(subnet)
             if router:
                 subnet.add_to_router(router.id)
@@ -150,7 +150,7 @@ class TestScenario(manager.NetworkScenarioTest):
             self.assertIn(myrouter.name, seen_router_names)
             self.assertIn(myrouter.id, seen_router_ids)
 
-    def _create_custom_subnet(self, network, mysubnet, namestart='subnet-smoke-', **kwargs):
+    def _create_custom_subnet(self, network, mysubnet, namestart='subnet-smoke-'):
         """
         Create a subnet for the given network with the cidr given.
         """
@@ -163,7 +163,7 @@ class TestScenario(manager.NetworkScenarioTest):
                 cidr=str(mysubnet["cidr"]),
             ),
         )
-        body['subnet'].update(kwargs)
+        #body['subnet'].update(kwargs)
         try:
             result = self.network_client.create_subnet(body=body)
         except exc.NeutronClientException as e:
