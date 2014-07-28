@@ -1,13 +1,13 @@
 __author__ = 'Albert'
 
-from tempest import config
+
 from tempest.openstack.common import log as logging
 from tempest import test
 from pprint import pprint
 from tempest.scenario.midokura.midotools import scenario
 from netaddr import IPNetwork, IPAddress
 
-CONF = config.CONF()
+
 LOG = logging.getLogger(__name__)
 CIDR1 = "10.10.10.8/29"
 CIDR2 = "10.10.1.8/29"
