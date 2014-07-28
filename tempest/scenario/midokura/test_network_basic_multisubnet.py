@@ -14,7 +14,7 @@ CIDR2 = "10.10.1.8/29"
 
 class TestBasicMultisubnet(scenario.TestScenario):
 
-    CONF = config.TempestConfig()
+
 
     @classmethod
     def setUpClass(cls):
