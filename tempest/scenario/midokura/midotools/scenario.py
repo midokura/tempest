@@ -6,11 +6,12 @@ from tempest.api.network import common as net_common
 from tempest.common.utils.data_utils import rand_name
 from tempest.openstack.common import log as logging
 from tempest.scenario import manager
+from tempest import config
 from neutronclient.common import exceptions as exc
 from pprint import pprint
 from tempest import test
 
-
+CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
 '''
@@ -28,8 +29,7 @@ class TestScenario(manager.NetworkScenarioTest):
     @classmethod
     def check_preconditions(cls):
         super(TestScenario, cls).check_preconditions()
-        cfg = cls.config.network
-        if not (cfg.tenant_networks_reachable or cfg.public_network_id):
+        if not (CONF.tenant_networks_reachable or CONF.public_network_id):
             msg = ('Either tenant_networks_reachable must be "true", or '
                    'public_network_id must be defined.')
             cls.enabled = False
