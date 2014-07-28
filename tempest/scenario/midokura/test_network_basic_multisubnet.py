@@ -66,7 +66,7 @@ class TestBasicMultisubnet(scenario.TestScenario):
 
     @test.attr(type='smoke')
     @test.services('compute', 'network')
-    def test_basic_multisubnet_scenario(self):
+    def test_network_basic_multisubnet(self):
         self._scenario_conf()
         self.custom_scenario(self.scenario)
         self.assertTrue(self._check_vm_assignation())
