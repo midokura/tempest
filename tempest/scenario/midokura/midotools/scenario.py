@@ -12,7 +12,7 @@ from tempest.scenario.midokura.midotools.admintools import TenantAdmin
 from tempest import config
 from tempest import test
 
-CONF = config.CONF()
+
 LOG = logging.getLogger(__name__)
 
 '''
@@ -48,6 +48,7 @@ class TestScenario(manager.NetworkScenarioTest):
                 raise cls.skipException(msg)
         #Is this no longer required?
         cls.check_preconditions()
+        """
         cls.keypairs = {}
         cls.security_groups = {}
         cls.networks = []
@@ -56,6 +57,7 @@ class TestScenario(manager.NetworkScenarioTest):
         cls.servers = []
         cls.floating_ips = {}
         cls.admin = TenantAdmin()
+        """
 
     def basic_scenario(self):
         self._create_keypairs()
@@ -73,8 +75,10 @@ class TestScenario(manager.NetworkScenarioTest):
                 tenant_id = self.tenant_id
             else:
                 tenant_id = self._create_tenant()
+            """
             self._create_custom_keypairs(tenant_id)
             self._create_custom_security_groups(tenant_id)
+            """
             for network in tenant['networks']:
                 network['tenant_id'] = tenant_id
                 mynetwork = self._create_custom_networks(network)
@@ -146,29 +150,25 @@ class TestScenario(manager.NetworkScenarioTest):
     def _create_custom_security_groups(self, tenant_id):
         self.security_groups[tenant_id] = self._create_security_group()
 
-    def _create_networks(self):
-        network = self._create_network(self.tenant_id)
-        router = self._get_router(self.tenant_id)
-        subnet = self._create_subnet(network)
-        subnet.add_to_router(router.id)
-        self.networks.append(network)
-        self.subnets.append(subnet)
-        self.routers.append(router)
 
     def _create_custom_networks(self, mynetwork):
         network = self._create_network(mynetwork['tenant_id'])
         router = None
+        subnets = []
         if mynetwork.get('router'):
             router = self._get_router(mynetwork['tenant_id'])
         for mysubnet in mynetwork['subnets']:
             subnet = self._create_custom_subnet(network, mysubnet)
+            subnets.append(subnet)
             if router:
                 subnet.add_to_router(router.id)
+        """
         self.networks.append(network)
         self.subnets.append(subnet)
         if router:
             self.routers.append(router)
-        return network
+        """
+        return network, subnets, router
 
     def _check_networks(self):
         # Checks that we see the newly created network/subnet/router via
@@ -179,6 +179,7 @@ class TestScenario(manager.NetworkScenarioTest):
         for mynet in self.networks:
             self.assertIn(mynet.name, seen_names)
             self.assertIn(mynet.id, seen_ids)
+
         seen_subnets = self._list_subnets()
         seen_net_ids = [n['network_id'] for n in seen_subnets]
         seen_subnet_ids = [n['id'] for n in seen_subnets]

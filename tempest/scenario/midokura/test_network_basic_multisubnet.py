@@ -65,9 +65,14 @@ class TestBasicMultisubnet(scenario.TestScenario):
                 s2 += 1
         return s1 == 4 or s2 == 4
 
+    def setUp(self):
+        self.security_group = \
+            self._create_security_group_neutron(tenant_id=self.tenant_id)
+        self._scenario_conf()
+        self.custom_scenario(self.scenario)
+
+
     @test.attr(type='smoke')
     @test.services('compute', 'network')
     def test_network_basic_multisubnet(self):
-        self._scenario_conf()
-        self.custom_scenario(self.scenario)
         self.assertTrue(self._check_vm_assignation())
