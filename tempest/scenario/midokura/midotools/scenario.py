@@ -29,7 +29,8 @@ class TestScenario(manager.NetworkScenarioTest):
     @classmethod
     def check_preconditions(cls):
         super(TestScenario, cls).check_preconditions()
-        if not (CONF.tenant_networks_reachable or CONF.public_network_id):
+        if not (CONF.network.tenant_networks_reachable
+                or CONF.network.public_network_id):
             msg = ('Either tenant_networks_reachable must be "true", or '
                    'public_network_id must be defined.')
             cls.enabled = False
