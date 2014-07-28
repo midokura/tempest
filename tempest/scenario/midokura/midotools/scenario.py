@@ -8,8 +8,6 @@ from tempest.openstack.common import log as logging
 from tempest.scenario import manager
 from neutronclient.common import exceptions as exc
 from pprint import pprint
-from tempest.scenario.midokura.midotools.admintools import TenantAdmin
-from tempest import config
 from tempest import test
 
 
@@ -46,8 +44,8 @@ class TestScenario(manager.NetworkScenarioTest):
             if not test.is_extension_enabled(ext, 'network'):
                 msg = "%s extension not enabled." % ext
                 raise cls.skipException(msg)
-        #Is this no longer required?
         cls.check_preconditions()
+        #Is this no longer required?
         """
         cls.keypairs = {}
         cls.security_groups = {}
@@ -81,54 +79,17 @@ class TestScenario(manager.NetworkScenarioTest):
             """
             for network in tenant['networks']:
                 network['tenant_id'] = tenant_id
-                mynetwork = self._create_custom_networks(network)
+                self.network, self.mysubnets, myrouter = \
+                    self._create_custom_networks(network)
                 self._check_networks()
+                self.servers = {}
                 for server in network['servers']:
                     name = rand_name('server-smoke-')
-                    myserver = self._create_server(name, mynetwork)
+                    myserver = self._create_server(name, self.network)
                     self.servers.append(myserver)
                     pprint(server['floating_ip'])
                     if server['floating_ip']:
                         self._assign_custom_floating_ips(myserver)
-
-    def _get_router(self, tenant_id):
-        """Retrieve a router for the given tenant id.
-
-        If a public router has been configured, it will be returned.
-
-        If a public router has not been configured, but a public
-        network has, a tenant router will be created and returned that
-        routes traffic to the public network.
-
-        """
-        router_id = self.config.network.public_router_id
-        network_id = self.config.network.public_network_id
-        if router_id:
-            result = self.network_client.show_router(router_id)
-            return net_common.AttributeDict(**result['router'])
-        elif network_id:
-            router = self._create_router(tenant_id)
-            router.add_gateway(network_id)
-            return router
-        else:
-            raise Exception("Neither of 'public_router_id' or "
-                            "'public_network_id' has been defined.")
-
-    def _create_router(self, tenant_id, namestart='router-smoke-'):
-        name = rand_name(namestart)
-        body = dict(
-            router=dict(
-                name=name,
-                admin_state_up=True,
-                tenant_id=tenant_id,
-            ),
-        )
-        result = self.network_client.create_router(body=body)
-        router = net_common.DeletableRouter(client=self.network_client,
-                                            **result['router'])
-        self.assertEqual(router.name, name)
-        self.set_resource(name, router)
-        return router
 
     def _create_tenant(self):
         # Create a tenant that is enabled
@@ -136,20 +97,12 @@ class TestScenario(manager.NetworkScenarioTest):
         tenant_id = tenant['id']
         return tenant_id
 
-    def _create_keypairs(self):
-        self.keypairs[self.tenant_id] = self.create_keypair(
-            name=rand_name('keypair-smoke-'))
-
-    def _create_security_groups(self):
-        self.security_groups[self.tenant_id] = self._create_security_group()
-
     def _create_custom_keypairs(self, tenant_id):
         self.keypairs[tenant_id] = self.create_keypair(
             name=rand_name('keypair-smoke-'))
 
     def _create_custom_security_groups(self, tenant_id):
         self.security_groups[tenant_id] = self._create_security_group()
-
 
     def _create_custom_networks(self, mynetwork):
         network = self._create_network(mynetwork['tenant_id'])
