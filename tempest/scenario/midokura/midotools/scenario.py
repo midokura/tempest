@@ -87,7 +87,8 @@ class TestScenario(manager.NetworkScenarioTest):
                     self._create_custom_networks(network)
                 self.networks.append(network)
                 self.subnets.extend(subnets)
-                self.routers.append(router)
+                if router :
+                    self.routers.append(router)
                 self._check_networks()
                 self.servers = {}
                 for server in network['servers']:
