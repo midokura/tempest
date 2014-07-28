@@ -2,8 +2,7 @@ __author__ = 'Albert'
 
 from tempest import config
 from tempest.openstack.common import log as logging
-from tempest.test import attr
-from tempest.test import services
+from tempest import test
 from pprint import pprint
 from tempest.scenario.midokura.midotools import scenario
 from netaddr import IPNetwork, IPAddress
@@ -11,6 +10,7 @@ from netaddr import IPNetwork, IPAddress
 LOG = logging.getLogger(__name__)
 CIDR1 = "10.10.10.8/29"
 CIDR2 = "10.10.1.8/29"
+
 
 class TestBasicMultisubnet(scenario.TestScenario):
 
@@ -64,8 +64,8 @@ class TestBasicMultisubnet(scenario.TestScenario):
                 s2 += 1
         return s1 == 4 or s2 == 4
 
-    @attr(type='smoke')
-    @services('compute', 'network')
+    @test.attr(type='smoke')
+    @test.services('compute', 'network')
     def test_basic_multisubnet_scenario(self):
         self._scenario_conf()
         self.custom_scenario(self.scenario)

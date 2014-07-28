@@ -1,22 +1,31 @@
 __author__ = 'Albert'
+
+import collections
+
 from tempest.api.network import common as net_common
 from tempest.common.utils.data_utils import rand_name
-from tempest import config
 from tempest.openstack.common import log as logging
 from tempest.scenario import manager
 from neutronclient.common import exceptions as exc
-from tempest.common.utils import data_utils
 from pprint import pprint
 from tempest.scenario.midokura.midotools.admintools import TenantAdmin
+from tempest import config
+from tempest import test
+
+CONF = config.CONF()
 LOG = logging.getLogger(__name__)
 
 '''
 This needs a heavy refactor since it is mainly though and designed to work with a single tenant
 '''
 
+Floating_IP_tuple = collections.namedtuple('Floating_IP_tuple',
+                                           ['floating_ip', 'server'])
+
+
 class TestScenario(manager.NetworkScenarioTest):
 
-    CONF = config.TempestConfig()
+
 
     @classmethod
     def check_preconditions(cls):
@@ -30,7 +39,14 @@ class TestScenario(manager.NetworkScenarioTest):
 
     @classmethod
     def setUpClass(cls):
+        # Create no network resources for these tests.
+        cls.set_network_resources()
         super(TestScenario, cls).setUpClass()
+        for ext in ['router', 'security-group']:
+            if not test.is_extension_enabled(ext, 'network'):
+                msg = "%s extension not enabled." % ext
+                raise cls.skipException(msg)
+        #Is this no longer required?
         cls.check_preconditions()
         cls.keypairs = {}
         cls.security_groups = {}

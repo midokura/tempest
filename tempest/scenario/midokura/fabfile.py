@@ -32,6 +32,6 @@ def pull_tempest():
 
 
 def run_tempest():
-    tests = "TestBasicMultisubnet "
+    tests = "test_network_basic_multisubnet"
     with cd('/var/lib/tempest/'):
         run('nosetests -q {0}'.format(tests))
