@@ -93,7 +93,7 @@ class TestScenario(manager.NetworkScenarioTest):
                 self.servers = []
                 for server in network['servers']:
                     name = rand_name('server-smoke-')
-                    serv_dict = self._create_server(name, self.network)
+                    serv_dict = self._create_server(name, cnetwork)
                     self.servers[serv_dict['server']] = serv_dict['keypair']
                     self._check_tenant_network_connectivity()
                     pprint(server['floating_ip'])
