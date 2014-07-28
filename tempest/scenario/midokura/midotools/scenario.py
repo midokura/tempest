@@ -69,6 +69,7 @@ class TestScenario(manager.NetworkScenarioTest):
     def custom_scenario(self, scenario):
         tenant_id = None
         pprint("######")
+        self.subnets = []
         for tenant in scenario['tenants']:
             if tenant['type'] == 'default':
                 tenant_id = self.tenant_id
@@ -80,17 +81,18 @@ class TestScenario(manager.NetworkScenarioTest):
             """
             for network in tenant['networks']:
                 network['tenant_id'] = tenant_id
-                self.network, self.mysubnets, myrouter = \
+                self.network, self.subnets, myrouter = \
                     self._create_custom_networks(network)
                 self._check_networks()
                 self.servers = {}
                 for server in network['servers']:
                     name = rand_name('server-smoke-')
-                    myserver = self._create_server(name, self.network)
-                    self.servers.append(myserver)
+                    serv_dict = self._create_server(name, self.network)
+                    self.servers[serv_dict['server']] = serv_dict['keypair']
+                    self._check_tenant_network_connectivity()
                     pprint(server['floating_ip'])
                     if server['floating_ip']:
-                        self._assign_custom_floating_ips(myserver)
+                        self._assign_custom_floating_ips(serv_dict)
 
     def _create_tenant(self):
         # Create a tenant that is enabled
@@ -112,7 +114,7 @@ class TestScenario(manager.NetworkScenarioTest):
         if mynetwork.get('router'):
             router = self._get_router(mynetwork['tenant_id'])
         for mysubnet in mynetwork['subnets']:
-            subnet = self._create_custom_subnet(network, mysubnet)
+            subnet = self._create_subnet(network, cidr=mysubnet["cidr"])
             subnets.append(subnet)
             if router:
                 subnet.add_to_router(router.id)
@@ -148,7 +150,7 @@ class TestScenario(manager.NetworkScenarioTest):
             self.assertIn(myrouter.name, seen_router_names)
             self.assertIn(myrouter.id, seen_router_ids)
 
-    def _create_custom_subnet(self, network, mysubnet, namestart='subnet-smoke-'):
+    def _create_custom_subnet(self, network, mysubnet, namestart='subnet-smoke-', **kwargs):
         """
         Create a subnet for the given network with the cidr given.
         """
@@ -161,6 +163,7 @@ class TestScenario(manager.NetworkScenarioTest):
                 cidr=str(mysubnet["cidr"]),
             ),
         )
+        body['subnet'].update(kwargs)
         try:
             result = self.network_client.create_subnet(body=body)
         except exc.NeutronClientException as e:
@@ -171,7 +174,7 @@ class TestScenario(manager.NetworkScenarioTest):
         subnet = net_common.DeletableSubnet(client=self.network_client,
                                             **result['subnet'])
         self.assertEqual(subnet.cidr, str(mysubnet['cidr']))
-        self.set_resource(rand_name(namestart), subnet)
+        self.addCleanup(self.delete_wrapper, subnet)
         return subnet
 
     def _create_server(self, name, network):
