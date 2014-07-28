@@ -83,14 +83,14 @@ class TestScenario(manager.NetworkScenarioTest):
             """
             for network in tenant['networks']:
                 network['tenant_id'] = tenant_id
-                network, subnets, router = \
+                cnetwork, subnets, router = \
                     self._create_custom_networks(network)
-                self.networks.append(network)
+                self.networks.append(cnetwork)
                 self.subnets.extend(subnets)
-                if router :
+                if router:
                     self.routers.append(router)
                 self._check_networks()
-                self.servers = {}
+                self.servers = []
                 for server in network['servers']:
                     name = rand_name('server-smoke-')
                     serv_dict = self._create_server(name, self.network)
