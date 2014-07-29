@@ -207,17 +207,14 @@ class TestScenario(manager.NetworkScenarioTest):
             self.servers.append(server)
             return server
 
-    def _assign_floating_ips(self):
-        public_network_id = self.config.network.public_network_id
-        for server in self.servers:
+    def _create_and_associate_floating_ips(self):
+        public_network_id = CONF.network.public_network_id
+        for server in self.servers.keys():
             floating_ip = self._create_floating_ip(server, public_network_id)
-            self.floating_ips.setdefault(server, [])
-            self.floating_ips[server].append(floating_ip)
+            self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
 
     def _assign_custom_floating_ips(self, server):
         pprint("assign floating ip")
-        pprint(server)
-        public_network_id = self.config.network.public_network_id
+        public_network_id = CONF.network.public_network_id
         floating_ip = self._create_floating_ip(server, public_network_id)
-        self.floating_ips.setdefault(server, [])
-        self.floating_ips[server].append(floating_ip)
+        self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
