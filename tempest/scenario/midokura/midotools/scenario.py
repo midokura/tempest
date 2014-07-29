@@ -100,7 +100,6 @@ class TestScenario(manager.NetworkScenarioTest):
                     name = rand_name('server-smoke-')
                     serv_dict = self._create_server(name, cnetwork)
                     self.servers[serv_dict['server']] = serv_dict['keypair']
-                    self._check_tenant_network_connectivity()
                     pprint(server['floating_ip'])
                     if server['floating_ip']:
                         self._assign_custom_floating_ips(serv_dict)
