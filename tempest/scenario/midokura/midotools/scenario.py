@@ -95,7 +95,7 @@ class TestScenario(manager.NetworkScenarioTest):
                 if router:
                     self.routers.append(router)
                 self._check_networks()
-                self.servers = []
+                self.servers = {}
                 for server in network['servers']:
                     name = rand_name('server-smoke-')
                     serv_dict = self._create_server(name, cnetwork)
