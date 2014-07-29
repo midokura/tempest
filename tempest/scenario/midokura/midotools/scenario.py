@@ -25,7 +25,6 @@ Floating_IP_tuple = collections.namedtuple('Floating_IP_tuple',
 class TestScenario(manager.NetworkScenarioTest):
 
 
-
     @classmethod
     def check_preconditions(cls):
         super(TestScenario, cls).check_preconditions()
@@ -46,17 +45,7 @@ class TestScenario(manager.NetworkScenarioTest):
                 msg = "%s extension not enabled." % ext
                 raise cls.skipException(msg)
         cls.check_preconditions()
-        #Is this no longer required?
-        """
-        cls.keypairs = {}
-        cls.security_groups = {}
-        cls.networks = []
-        cls.subnets = []
-        cls.routers = []
-        cls.servers = []
-        cls.floating_ips = {}
-        cls.admin = TenantAdmin()
-        """
+
 
     def setUp(self):
         super(TestScenario, self).setUp()
@@ -214,7 +203,7 @@ class TestScenario(manager.NetworkScenarioTest):
 
     def _assign_custom_floating_ips(self, server):
         pprint("assign floating ip")
-        pprint(server)
         public_network_id = CONF.network.public_network_id
         floating_ip = self._create_floating_ip(server, public_network_id)
+        pprint(floating_ip)
         self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)

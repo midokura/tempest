@@ -24,7 +24,7 @@ from tempest.test import attr
 from tempest.test import services
 from tempest.common import ssh
 from tempest.scenario.midokura.midotools import scenario
-
+from pprint import pprint
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -71,6 +71,7 @@ class TestMetaData(scenario.TestScenario):
     def _check_metadata(self):
         ssh_login = CONF.compute.image_ssh_user
         try:
+            pprint(self.floating_ip_tuple)
             server, floating_ip = self.floating_ip_tuple
             ip_address = floating_ip.floating_ip_address
             private_key = self.servers[server].private_key
