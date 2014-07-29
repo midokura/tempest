@@ -17,23 +17,20 @@ __author__ = 'Albert'
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest.api.network import common as net_common
-from tempest.common import debug
-from tempest.common.utils.data_utils import rand_name
+
 from tempest import config
 from tempest.openstack.common import log as logging
-from tempest.scenario import manager
 from tempest.test import attr
 from tempest.test import services
 from tempest.common import ssh
-from tempest import exceptions
-from pprint import pprint
+from tempest.scenario.midokura.midotools import scenario
+
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
 CIDR1 = "10.10.1.0/24"
 
-class TestMetaData(manager.NetworkScenarioTest):
+class TestMetaData(scenario.TestScenario):
 
     @classmethod
     def setUpClass(cls):
