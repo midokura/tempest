@@ -71,14 +71,14 @@ class TestAdminStateUp(scenario.TestScenario):
         for router in self.routers:
             self.network_client.update_router(router.id, {'router': {'admin_state_up': False}})
             pprint("router test")
-            self.check_public_network_connectivity(True)
+            self.check_public_network_connectivity(False)
             self.network_client.update_router(router.id, {'router': {'admin_state_up': True}})
 
     def _check_vm_connectivity_net(self):
         for network in self.networks:
             pprint("network test")
             self.network_client.update_network(network.id, {'network': {'admin_state_up': False}})
-            self.check_public_network_connectivity(True)
+            self.check_public_network_connectivity(False)
             self.network_client.update_network(network.id, {'network': {'admin_state_up': True}})
 
     def _check_vm_connectivity_port(self):
@@ -86,7 +86,7 @@ class TestAdminStateUp(scenario.TestScenario):
         floating_ip, server = self.floating_ip_tuple
         port_id = floating_ip.get("port_id")
         self.network_client.update_port(port_id, {'port': {'admin_state_up': False}})
-        self.check_public_network_connectivity(True)
+        self.check_public_network_connectivity(False)
         self.network_client.update_port(port_id, {'port': {'admin_state_up': True}})
 
 
@@ -95,15 +95,15 @@ class TestAdminStateUp(scenario.TestScenario):
     def test_network_adminstateup(self):
         LOG.info("Starting Router test")
         self._check_vm_connectivity_router()
-        self.check_public_network_connectivity(False)
+        self.check_public_network_connectivity(True)
         pprint("End of Rotuer test")
         LOG.info("Starting Network test")
         self._check_vm_connectivity_net()
-        self.check_public_network_connectivity(False)
+        self.check_public_network_connectivity(True)
         pprint("End of Net test")
         LOG.info("Starting Port test")
         self._check_vm_connectivity_port()
         pprint("End of Port test")
-        self.check_public_network_connectivity(False)
+        self.check_public_network_connectivity(True)
 
 
