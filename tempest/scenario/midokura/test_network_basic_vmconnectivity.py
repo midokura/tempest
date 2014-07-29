@@ -1,3 +1,4 @@
+__author__ = 'Albert'
 '''
 Scenario:
 A launched VM should get an ip address and routing table entries from DHCP. And
@@ -22,15 +23,14 @@ VM should get a route for 169.254.169.254 (on non-cirros )
 
 '''
 
-from tempest.api.network import common as net_common
-from tempest.common import debug
+
 from tempest.common.utils.data_utils import rand_name
 from tempest import config
 from tempest.openstack.common import log as logging
 from tempest.scenario import manager
-from tempest.test import attr
 from tempest.test import services
 
+CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
 
@@ -41,9 +41,10 @@ class TestNetworkBasicVMConnectivity(manager.NetworkScenarioTest):
     @classmethod
     def check_preconditions(cls):
         super(TestNetworkBasicVMConnectivity, cls).check_preconditions()
-        cfg = cls.config.network
-        if not (cfg.tenant_networks_reachable or cfg.public_network_id):
-            msg = ('Either tenant_networks_reachable must be "true", or public_network_id must be defined.')
+        if not (CONF.network.tenant_networks_reachable
+                or CONF.network.public_network_id):
+            msg = ('Either tenant_networks_reachable must be "true", '
+                   'or public_network_id must be defined.')
             cls.enabled = False
             raise cls.skipException(msg)
 
@@ -51,11 +52,13 @@ class TestNetworkBasicVMConnectivity(manager.NetworkScenarioTest):
     def setUpClass(cls):
         super(TestNetworkBasicVMConnectivity, cls).setUpClass()
         cls.check_preconditions()
-        cls.keypairs = {}
-        cls.security_groups = {}
-        cls.network = ""
-        cls.subnet  = ""
-        cls.server  = ""
+
+    def setUp(self):
+        super(TestNetworkBasicVMConnectivity, self).setUp()
+        self.security_group = \
+            self._create_security_group_neutron(tenant_id=self.tenant_id)
+        self._scenario_conf()
+        self.custom_scenario(self.scenario)
 
     def _create_networks(self): 
         self.network = self._create_network(self.tenant_id)                                                                                                                                                                                           
@@ -105,7 +108,7 @@ class TestNetworkBasicVMConnectivity(manager.NetworkScenarioTest):
 
 
     @services('compute', 'network')
-    def test_network_basic_ops(self):
+    def test_network_basic_vmconnectivity(self):
         self._create_keypairs()
         self._create_security_groups()
         self._create_networks()

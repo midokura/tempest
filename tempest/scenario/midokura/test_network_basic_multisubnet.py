@@ -15,12 +15,17 @@ CIDR2 = "10.10.1.8/29"
 
 class TestBasicMultisubnet(scenario.TestScenario):
 
-
-
     @classmethod
     def setUpClass(cls):
         super(TestBasicMultisubnet, cls).setUpClass()
         cls.scenario = {}
+
+    def setUp(self):
+        super(TestBasicMultisubnet, self).setUp()
+        self.security_group = \
+            self._create_security_group_neutron(tenant_id=self.tenant_id)
+        self._scenario_conf()
+        self.custom_scenario(self.scenario)
 
     def _scenario_conf(self):
         serverA = {
@@ -64,13 +69,6 @@ class TestBasicMultisubnet(scenario.TestScenario):
             else:
                 s2 += 1
         return s1 == 4 or s2 == 4
-
-    def setUp(self):
-        super(TestBasicMultisubnet, self).setUp()
-        self.security_group = \
-            self._create_security_group_neutron(tenant_id=self.tenant_id)
-        self._scenario_conf()
-        self.custom_scenario(self.scenario)
 
 
     @test.attr(type='smoke')

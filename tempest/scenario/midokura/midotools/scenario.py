@@ -73,7 +73,6 @@ class TestScenario(manager.NetworkScenarioTest):
 
     def custom_scenario(self, scenario):
         tenant_id = None
-        pprint("######")
         self.networks = []
         self.subnets = []
         self.routers = []
