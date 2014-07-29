@@ -58,6 +58,11 @@ class TestScenario(manager.NetworkScenarioTest):
         cls.admin = TenantAdmin()
         """
 
+    def setUp(self):
+        super(TestScenario, self).setUp()
+        self.cleanup_waits = []
+        self.addCleanup(self._wait_for_cleanups)
+
     def basic_scenario(self):
         self._create_keypairs()
         self._create_security_groups()
