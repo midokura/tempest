@@ -72,68 +72,43 @@ class TestAdminStateUp(manager.NetworkScenarioTest):
             'tenants': [tenantA],
         }
 
-    def _do_test_vm_connectivity_admin_state_up(self):
-        must_fail = False
-        try:
-            self._check_public_network_connectivity()
-        except Exception as exc:
-            must_fail = True
-            LOG.exception(exc)
-            debug.log_ip_ns()
-        finally:
-            self.assertEqual(must_fail, True, "No connection to VM")
-
     def _check_vm_connectivity_router(self):
         for router in self.routers:
             self.network_client.update_router(router.id, {'router': {'admin_state_up': False}})
             pprint("router test")
-            self._do_test_vm_connectivity_admin_state_up()
+            self.check_public_network_connectivity(True)
             self.network_client.update_router(router.id, {'router': {'admin_state_up': True}})
 
     def _check_vm_connectivity_net(self):
         for network in self.networks:
             pprint("network test")
             self.network_client.update_network(network.id, {'network': {'admin_state_up': False}})
-            self._do_test_vm_connectivity_admin_state_up()
+            self.check_public_network_connectivity(True)
             self.network_client.update_network(network.id, {'network': {'admin_state_up': True}})
 
     def _check_vm_connectivity_port(self):
         pprint("port test")
-        for server, floating_ips in self.floating_ips.iteritems():
-            for floating_ip in floating_ips:
-                port_id = floating_ip.get("port_id")
-                self.network_client.update_port(port_id, {'port': {'admin_state_up': False}})
-                self._do_test_vm_connectivity_admin_state_up()
-                self.network_client.update_port(port_id, {'port': {'admin_state_up': True}})
+        floating_ip, server = self.floating_ip_tuple
+        port_id = floating_ip.get("port_id")
+        self.network_client.update_port(port_id, {'port': {'admin_state_up': False}})
+        self.check_public_network_connectivity(True)
+        self.network_client.update_port(port_id, {'port': {'admin_state_up': True}})
 
-    def _check_public_network_connectivity(self):
-        ssh_login = self.config.compute.image_ssh_user
-        private_key = self.keypairs[self.tenant_id].private_key
-        try:
-            for server, floating_ips in self.floating_ips.iteritems():
-                for floating_ip in floating_ips:
-                    ip_address = floating_ip.floating_ip_address
-                    self._check_vm_connectivity(ip_address, ssh_login, private_key)
-        except Exception as exc:
-            LOG.exception(exc)
-            debug.log_ip_ns()
-            raise exc
 
     @attr(type='smoke')
     @services('compute', 'network')
     def test_network_adminstateup(self):
-        self.basic_scenario()
         LOG.info("Starting Router test")
         self._check_vm_connectivity_router()
-        self._check_public_network_connectivity()
+        self.check_public_network_connectivity(False)
         pprint("End of Rotuer test")
         LOG.info("Starting Network test")
         self._check_vm_connectivity_net()
-        self._check_public_network_connectivity()
+        self.check_public_network_connectivity(False)
         pprint("End of Net test")
         LOG.info("Starting Port test")
         self._check_vm_connectivity_port()
         pprint("End of Port test")
-        self._check_public_network_connectivity()
+        self.check_public_network_connectivity(False)
 
 

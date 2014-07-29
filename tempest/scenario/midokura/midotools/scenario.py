@@ -92,6 +92,19 @@ class TestScenario(manager.NetworkScenarioTest):
                     if server['floating_ip']:
                         self._assign_custom_floating_ips(serv_dict['server'])
 
+    def check_public_network_connectivity(self, should_connect=True,
+                                           msg=None):
+        ssh_login = CONF.compute.image_ssh_user
+        floating_ip, server = self.floating_ip_tuple
+        ip_address = floating_ip.floating_ip_address
+        private_key = None
+        if should_connect:
+            private_key = self.servers[server].private_key
+        # call the common method in the parent class
+        super(TestScenario, self)._check_public_network_connectivity(
+            ip_address, ssh_login, private_key, should_connect, msg,
+            self.servers.keys())
+
     def _create_tenant(self):
         # Create a tenant that is enabled
         tenant = self.admin.tenant_create_enabled()
