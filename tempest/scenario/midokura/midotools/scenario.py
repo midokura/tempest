@@ -100,7 +100,7 @@ class TestScenario(manager.NetworkScenarioTest):
                     serv_dict = self._create_server(name, cnetwork)
                     self.servers[serv_dict['server']] = serv_dict['keypair']
                     if server['floating_ip']:
-                        self._assign_custom_floating_ips(serv_dict)
+                        self._assign_custom_floating_ips(serv_dict['server'])
 
     def _create_tenant(self):
         # Create a tenant that is enabled
