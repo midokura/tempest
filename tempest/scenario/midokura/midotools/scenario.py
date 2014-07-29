@@ -184,25 +184,17 @@ class TestScenario(manager.NetworkScenarioTest):
         return subnet
 
     def _create_server(self, name, network):
-        pprint("server creation")
-        pprint(network['tenant_id'])
-        tenant_id = network['tenant_id']
-        keypair_name = self.keypairs[tenant_id].name
-        pprint(keypair_name)
-        pprint(self.security_groups[tenant_id])
-        security_groups = [self.security_groups[tenant_id].name]
-        pprint("security groups")
-        pprint(security_groups)
+        keypair = self.create_keypair(name='keypair-%s' % name)
+        security_groups = [self.security_group.name]
         create_kwargs = {
             'nics': [
-                {'net-id': network['id']},
-                ],
-            'key_name': keypair_name,
+                {'net-id': network.id},
+            ],
+            'key_name': keypair.name,
             'security_groups': security_groups,
-            }
-        pprint(create_kwargs)
+        }
         server = self.create_server(name=name, create_kwargs=create_kwargs)
-        return server
+        return dict(server=server, keypair=keypair)
 
     def _create_servers(self):
         pprint(self.networks)
