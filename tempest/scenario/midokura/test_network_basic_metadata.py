@@ -73,6 +73,7 @@ class TestMetaData(scenario.TestScenario):
         try:
             pprint(self.floating_ip_tuple)
             server, floating_ip = self.floating_ip_tuple
+            pprint(floating_ip.__dict__)
             ip_address = floating_ip.floating_ip_address
             private_key = self.servers[server].private_key
             ssh_client = ssh.Client(ip_address, ssh_login,
