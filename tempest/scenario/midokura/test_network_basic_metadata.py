@@ -70,7 +70,6 @@ class TestMetaData(scenario.TestScenario):
 
     def _check_metadata(self):
         ssh_login = CONF.compute.image_ssh_user
-        private_key = self.keypairs[self.tenant_id].private_key
         try:
             server, floating_ip = self.floating_ip_tuple
             ip_address = floating_ip.floating_ip_address
