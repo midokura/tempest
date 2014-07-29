@@ -34,8 +34,6 @@ CIDR1 = "10.10.1.0/24"
 
 class TestAdminStateUp(manager.NetworkScenarioTest):
 
-    CONF = config.TempestConfig()
-
     @classmethod
     def setUpClass(cls):
         super(TestAdminStateUp, cls).setUpClass()
