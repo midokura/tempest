@@ -66,6 +66,7 @@ class TestBasicMultisubnet(scenario.TestScenario):
         return s1 == 4 or s2 == 4
 
     def setUp(self):
+        super(TestBasicMultisubnet, self).setUp()
         self.security_group = \
             self._create_security_group_neutron(tenant_id=self.tenant_id)
         self._scenario_conf()
