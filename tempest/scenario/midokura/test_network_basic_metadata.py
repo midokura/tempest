@@ -1,4 +1,6 @@
 __author__ = 'Albert'
+__email__ = "albert.vico@midokura.com"
+
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
 # Copyright 2012 OpenStack Foundation
@@ -77,6 +79,7 @@ class TestMetaData(scenario.TestScenario):
             private_key = self.servers[server].private_key
             linux_client = self.get_remote_client(ip_address,ssh_login,private_key)
             result = linux_client.exec_command("curl http://169.254.169.254")
+            LOG.info(result)
             _expected = "1.0\n2007-01-19\n2007-03-01\n2007-08-29\n2007-10-10\n" \
                         "2007-12-15\n2008-02-01\n2008-09-01\n2009-04-04\nlatest"
             self.assertEqual(_expected, result)

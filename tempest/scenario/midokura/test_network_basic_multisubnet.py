@@ -1,5 +1,5 @@
 __author__ = 'Albert'
-
+__email__ = "albert.vico@midokura.com"
 
 from tempest.openstack.common import log as logging
 from tempest import test

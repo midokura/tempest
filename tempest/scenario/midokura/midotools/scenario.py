@@ -1,4 +1,5 @@
 __author__ = 'Albert'
+__email__ = "albert.vico@midokura.com"
 
 import collections
 
