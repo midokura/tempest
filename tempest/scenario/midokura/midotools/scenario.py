@@ -198,11 +198,13 @@ class TestScenario(manager.NetworkScenarioTest):
             nics = []
             for network in self.networks:
                 nics.append({'net-id': network.id})
+                pprint(nics)
         create_kwargs = {
             'nics': nics,
             'key_name': keypair.name,
             'security_groups': security_groups,
         }
+        pprint(create_kwargs)
         server = self.create_server(name=name, create_kwargs=create_kwargs)
         return dict(server=server, keypair=keypair)
 
