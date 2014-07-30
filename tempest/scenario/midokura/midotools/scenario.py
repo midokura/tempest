@@ -270,7 +270,7 @@ class TestScenario(manager.NetworkScenarioTest):
         ports = self._list_ports(device_id=server.id)
         pprint(ports)
         if ip_addr:
-            for port in ports
+            for port in ports:
                 if port['fixed_ips'][0]['ip_address'] == ip_addr:
                     return port['id']
             #ports = [p for p in ports['ports'] if p['fixed_ips'][0]['ip_address'] == ip_addr]
