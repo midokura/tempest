@@ -247,7 +247,7 @@ class TestScenario(manager.NetworkScenarioTest):
         name = 'server-{tenant}-access_point-'.format(
             tenant=tenant['name'])
         name = rand_name(name)
-        serv_dict = self._create_server(name, network, True)
+        serv_dict = self._create_server(name, network,isgateway=True)
         self.access_point = serv_dict['server']
         self._assign_floating_ips(serv_dict['server'])
 
