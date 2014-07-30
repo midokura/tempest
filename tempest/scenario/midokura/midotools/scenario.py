@@ -243,7 +243,7 @@ class TestScenario(manager.NetworkScenarioTest):
         workaround ip namespace
         """
         name = 'server-{tenant}-access_point-'.format(
-            tenant=tenant.creds.tenant_name)
+            tenant=tenant['name'])
         name = rand_name(name)
         server = self._create_server(name, network)
         tenant.access_point = server
