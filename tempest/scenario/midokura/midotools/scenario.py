@@ -259,8 +259,8 @@ class TestScenario(manager.NetworkScenarioTest):
     def _assign_acces_point_floating_ip(self, server):
         public_network_id = CONF.network.public_network_id
         server_ip = self.get_server_ip(server, isgateway=True)
-        fixed_ips = [{"ip_address": server_ip,\
-                      "subnet_id": self.gwsubnet['id']}]
+        fixed_ips = [{u"ip_address": server_ip,\
+                      u"subnet_id": self.gwsubnet['id']}]
         port_id = self._get_server_port_id(server, ip_addr=fixed_ips)
         floating_ip = self._create_floating_ip(server, public_network_id, port_id)
         self.floating_ips.setdefault(server, floating_ip)

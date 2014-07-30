@@ -865,7 +865,6 @@ class NetworkScenarioTest(OfficialClientTest):
         return port
 
     def _get_server_port_id(self, server, ip_addr=None):
-        pprint(ip_addr)
         ports = self._list_ports(device_id=server.id, fixed_ip=ip_addr)
         pprint(ports)
         self.assertEqual(len(ports), 1,
