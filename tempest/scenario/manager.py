@@ -867,6 +867,7 @@ class NetworkScenarioTest(OfficialClientTest):
 
     def _get_server_port_id(self, server, ip_addr=None):
         ports = self._list_ports(device_id=server.id, fixed_ip=ip_addr)
+        ports = [p for p in ports if p['fixed_ips']['ip_address']==ip_addr]
         pprint(ports)
         self.assertEqual(len(ports), 1,
                          "Unable to determine which port to target.")
