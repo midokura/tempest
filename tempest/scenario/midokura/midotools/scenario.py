@@ -267,8 +267,13 @@ class TestScenario(manager.NetworkScenarioTest):
         self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
 
     def _get_custom_server_port_id(self, server, ip_addr=None):
-        ports = self._list_ports(device_id=server.id, fixed_ip=ip_addr)
-        ports = [p for p in ports['ports'] if p['fixed_ips'][0]['ip_address']==ip_addr]
+        ports = self._list_ports(device_id=server.id)
+        pprint(ports)
+        if ip_addr:
+            for port in ports
+                if port['fixed_ips'][0]['ip_address'] == ip_addr:
+                    return port['id']
+            #ports = [p for p in ports['ports'] if p['fixed_ips'][0]['ip_address'] == ip_addr]
         self.assertEqual(len(ports), 1,
                          "Unable to determine which port to target.")
         return ports[0]['id']
