@@ -47,7 +47,6 @@ class TestScenario(manager.NetworkScenarioTest):
                 raise cls.skipException(msg)
         cls.check_preconditions()
 
-
     def setUp(self):
         super(TestScenario, self).setUp()
         self.cleanup_waits = []
@@ -91,6 +90,8 @@ class TestScenario(manager.NetworkScenarioTest):
                     self.servers[serv_dict['server']] = serv_dict['keypair']
                     if server['floating_ip']:
                         self._assign_custom_floating_ips(serv_dict['server'])
+            if tenant['hasgateway']:
+                self._build_gateway(self.tenants[tenant_id])
 
     def check_public_network_connectivity(self, should_connect=True,
                                            msg=None):
@@ -109,6 +110,7 @@ class TestScenario(manager.NetworkScenarioTest):
         # Create a tenant that is enabled
         tenant = self.admin.tenant_create_enabled()
         tenant_id = tenant['id']
+        self.tenants[tenant_id] = tenant
         return tenant_id
 
     def _create_custom_keypairs(self, tenant_id):
@@ -161,7 +163,7 @@ class TestScenario(manager.NetworkScenarioTest):
             self.assertIn(myrouter.name, seen_router_names)
             self.assertIn(myrouter.id, seen_router_ids)
 
-    def _create_custom_subnet(self, network, mysubnet, namestart='subnet-smoke-'):
+    def _create_custom_subnet(self, network, mysubnet):
         """
         Create a subnet for the given network with the cidr given.
         """
@@ -188,13 +190,17 @@ class TestScenario(manager.NetworkScenarioTest):
         self.addCleanup(self.delete_wrapper, subnet)
         return subnet
 
-    def _create_server(self, name, network):
+    def _create_server(self, name, network, security_groups=None, isgateway=None):
         keypair = self.create_keypair(name='keypair-%s' % name)
-        security_groups = [self.security_group.name]
+        if security_groups in None:
+            security_groups = [self.security_group.name]
+        nics = [{'net-id': network.id}, ]
+        if isgateway:
+            nics = []
+            for network in self.networks:
+                nics.append({'net-id': network.id})
         create_kwargs = {
-            'nics': [
-                {'net-id': network.id},
-            ],
+            'nics': nics,
             'key_name': keypair.name,
             'security_groups': security_groups,
         }
@@ -219,5 +225,46 @@ class TestScenario(manager.NetworkScenarioTest):
         pprint("assign floating ip")
         public_network_id = CONF.network.public_network_id
         floating_ip = self._create_floating_ip(server, public_network_id)
-        pprint(floating_ip)
         self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
+
+    """
+    GateWay methods
+    """
+    def _build_gateway(self, tenant):
+        network, subnet, router  = \
+        self._create_networks(tenant.tenant_id)
+        self.networks.append(network)
+        self.subnets.append(subnet)
+        self.routers.append(router)
+        self._set_access_point(tenant, network)
+
+    def _set_access_point(self, tenant, network):
+        """
+        creates a server in a secgroup with rule allowing external ssh
+        in order to access tenant internal network
+        workaround ip namespace
+        """
+        secgroups = [sg.name for sg in tenant.security_groups.values()]
+        name = 'server-{tenant}-access_point-'.format(
+            tenant=tenant.creds.tenant_name)
+        name = rand_name(name)
+        server = self._create_server(name, network,
+                                     security_groups=secgroups)
+        tenant.access_point = server
+        self._assign_floating_ips(server)
+
+    def _assign_floating_ips(self, server):
+        public_network_id = CONF.network.public_network_id
+        floating_ip = self._create_floating_ip(server, public_network_id)
+        self.floating_ips.setdefault(server, floating_ip)
+
+    def _connect_to_access_point(self, tenant):
+        """
+        create ssh connection to tenant access point
+        """
+        access_point_ssh = \
+            self.floating_ips[tenant.access_point].floating_ip_address
+        private_key = tenant.keypair.private_key
+        access_point_ssh = self._ssh_to_server(access_point_ssh,
+                                               private_key=private_key)
+        return access_point_ssh

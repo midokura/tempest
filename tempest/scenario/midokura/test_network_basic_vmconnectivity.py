@@ -24,29 +24,18 @@ VM should get a route for 169.254.169.254 (on non-cirros )
 '''
 
 
-from tempest.common.utils.data_utils import rand_name
+from tempest.common import debug
 from tempest import config
 from tempest.openstack.common import log as logging
 from tempest.scenario import manager
 from tempest.test import services
+from tempest import test
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
-
+CIDR1 = "10.10.1.0/24"
 
 class TestNetworkBasicVMConnectivity(manager.NetworkScenarioTest):
-
-    CONF = config.TempestConfig()
-
-    @classmethod
-    def check_preconditions(cls):
-        super(TestNetworkBasicVMConnectivity, cls).check_preconditions()
-        if not (CONF.network.tenant_networks_reachable
-                or CONF.network.public_network_id):
-            msg = ('Either tenant_networks_reachable must be "true", '
-                   'or public_network_id must be defined.')
-            cls.enabled = False
-            raise cls.skipException(msg)
 
     @classmethod
     def setUpClass(cls):
@@ -60,59 +49,56 @@ class TestNetworkBasicVMConnectivity(manager.NetworkScenarioTest):
         self._scenario_conf()
         self.custom_scenario(self.scenario)
 
-    def _create_networks(self): 
-        self.network = self._create_network(self.tenant_id)                                                                                                                                                                                           
-        self.subnet = self._create_subnet(self.network)                                                                                                                                                                                                    
-
-    def _create_keypairs(self):
-        self.keypairs[self.tenant_id] = self.create_keypair(name=rand_name('keypair-smoke-'))
-
-    def _create_security_groups(self):
-        self.security_groups[self.tenant_id] = self._create_security_group()
-                                 
-    def _create_server(self, name, network):
-        tenant_id = network.tenant_id
-        keypair_name = self.keypairs[tenant_id].name
-        security_groups = [self.security_groups[tenant_id].name]
-        create_kwargs = {
-            'nics': [ 
-                {'net-id': network.id},
-            ],
-             'key_name': keypair_name,
-             'security_groups': security_groups,
+    def _scenario_conf(self):
+        serverB = {
+            'floating_ip': False,
         }
-        self.server = self.create_server(name=name, create_kwargs=create_kwargs)
+        subnetA = {
+            "network_id": None,
+            "ip_version": 4,
+            "cidr": CIDR1,
+            "allocation_pools": None
+        }
+        networkA = {
+            'subnets': [subnetA],
+            'servers': [serverB],
+        }
+        tenantA = {
+            'networks': [networkA],
+            'tenant_id': None,
+            'type': 'default',
+            'hasgateway': True
+        }
+        self.scenario = {
+            'tenants': [tenantA],
+        }
 
-    def _check_networks(self):
-    # Checks that we see the newly created network/subnet via
-    # checking the result of list_[networks,subnets]
-    # Should exist only one network
-        seen_nets = self._list_networks()
-        seen_names = [n['name'] for n in seen_nets]
-        seen_ids = [n['id'] for n in seen_nets]
-        self.assertIn(self.network.name, seen_names)
-        self.assertIn(self.network.id, seen_ids)
-        seen_subnets = self._list_subnets()
-        seen_net_ids = [n['network_id'] for n in seen_subnets]
-        seen_subnet_ids = [n['id'] for n in seen_subnets]
-        self.assertIn(self.network.id, seen_net_ids)                                                                                                                                                                                                
-        self.assertIn(self.subnet.id, seen_subnet_ids)
+    def _check_ip(self):
+        tenant = self.tenants[self.tenant_id]
+        access_point_ssh = self._connect_to_access_point(tenant)
+        for server in self.servers:
+            if server.id != tenant.access_point.id:
+                dest = self._get_server_ip(server)
+                self._check_connectivity(access_point=access_point_ssh,
+                                         ip=dest)
+                access_point_ssh.ping_host(dest)
 
-    def _check_serverip(self):
-    # Checks that the server has the assigned IP
-        ssh_login = self.config.compute.image_ssh_user
-        private_key = self.keypairs[self.tenant_id].private_key
-        for net_name, ip_addresses in self.server.networks.iteritems():
-                for ip_address in ip_addresses:
-                    self._check_vm_connectivity(ip_address, ssh_login, private_key)
+    def _check_connectivity(self, access_point, ip, should_succeed=True):
+        if should_succeed:
+            msg = "Timed out waiting for %s to become reachable" % ip
+        else:
+            msg = "%s is reachable" % ip
+        try:
+            self.assertTrue(self._check_remote_connectivity(access_point, ip,
+                                                            should_succeed),
+                            msg)
+        except test.exceptions.SSHTimeout:
+            raise
+        except Exception:
+            debug.log_net_debug()
+            raise
 
 
     @services('compute', 'network')
     def test_network_basic_vmconnectivity(self):
-        self._create_keypairs()
-        self._create_security_groups()
-        self._create_networks()
-        self._check_networks()
-        name = rand_name('server-smoke-%d-' % 1)
-        self._create_server(name, self.network)
-        self._check_serverip()
+        self._check_connectivity()
