@@ -242,12 +242,10 @@ class TestScenario(manager.NetworkScenarioTest):
         in order to access tenant internal network
         workaround ip namespace
         """
-        secgroups = [sg.name for sg in tenant.security_groups.values()]
         name = 'server-{tenant}-access_point-'.format(
             tenant=tenant.creds.tenant_name)
         name = rand_name(name)
-        server = self._create_server(name, network,
-                                     security_groups=secgroups)
+        server = self._create_server(name, network)
         tenant.access_point = server
         self._assign_floating_ips(server)
 

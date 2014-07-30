@@ -24,7 +24,6 @@ class TenantAdmin(object):
 
     def get_tenant(self, tenant_id):
         res, tenant = self.client.get_tenant(tenant_id)
-        pprint(tenant)
         self.tenants.append(tenant)
         return tenant
 
