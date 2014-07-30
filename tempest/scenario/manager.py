@@ -788,10 +788,11 @@ class NetworkScenarioTest(OfficialClientTest):
         return routers['routers']
 
     def _list_ports(self, **kwargs):
+        pprint(kwargs['fixed_ip'])
         ports = self.network_client.list_ports(**kwargs)
         pprint(ports)
         for port in ports['ports']:
-            if port['fixed_ips'] is kwargs['fixed_ip']:
+            if port['fixed_ips'] == kwargs['fixed_ip']:
                 return port
         return ports['ports']
 
