@@ -39,6 +39,7 @@ from tempest import config
 from tempest import exceptions
 from tempest.openstack.common import log
 from tempest.openstack.common import timeutils
+from pprint import pprint
 import tempest.test
 
 CONF = config.CONF
@@ -865,6 +866,7 @@ class NetworkScenarioTest(OfficialClientTest):
 
     def _get_server_port_id(self, server, ip_addr=None):
         ports = self._list_ports(device_id=server.id, fixed_ip=ip_addr)
+        pprint(ports)
         self.assertEqual(len(ports), 1,
                          "Unable to determine which port to target.")
         return ports[0]['id']
