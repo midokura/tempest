@@ -268,7 +268,7 @@ class TestScenario(manager.NetworkScenarioTest):
 
     def _get_custom_server_port_id(self, server, ip_addr=None):
         ports = self._list_ports(device_id=server.id)
-        pprint(ports)
+        #pprint(ports)
         if ip_addr:
             for port in ports:
                 if port['fixed_ips'][0]['ip_address'] == ip_addr:
