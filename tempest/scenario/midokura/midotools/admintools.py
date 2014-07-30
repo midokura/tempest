@@ -1,7 +1,7 @@
 
 from tempest.common.utils.data_utils import rand_name
 from tempest import clients
-
+from pprint import pprint
 
 class TenantAdmin(object):
     _interface = 'json'
