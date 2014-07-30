@@ -253,16 +253,13 @@ class TestScenario(manager.NetworkScenarioTest):
             tenant=tenant['name'])
         name = rand_name(name)
         serv_dict = self._create_server(name, network, isgateway=True)
-        self.access_point = serv_dict['server']
-        self._assign_acces_point_floating_ip(serv_dict['server'])
+        self.access_point[serv_dict['server']] = serv_dict['keypair']
+        pprint(self.access_point)
+        self._assign_access_point_floating_ip(serv_dict['server'])
 
-    def _assign_acces_point_floating_ip(self, server):
+    def _assign_access_point_floating_ip(self, server):
         public_network_id = CONF.network.public_network_id
         server_ip = self.get_server_ip(server, isgateway=True)
-        fixed_ips = [{
-            'ip_address': server_ip,
-            'subnet_id': self.gwsubnet['id'],
-        }]
         port_id = self._get_custom_server_port_id(server, ip_addr=server_ip)
         floating_ip = self._create_floating_ip(server, public_network_id, port_id)
         self.floating_ips.setdefault(server, floating_ip)
@@ -275,13 +272,13 @@ class TestScenario(manager.NetworkScenarioTest):
                          "Unable to determine which port to target.")
         return ports[0]['id']
 
-    def _connect_to_access_point(self, access_point):
+    def connect_to_access_point(self, access_point):
         """
         create ssh connection to tenant access point
         """
         access_point_ssh = \
             self.floating_ips[access_point].floating_ip_address
-        private_key = access_point.private_key
+        private_key = access_point[access_point].private_key
         access_point_ssh = self._ssh_to_server(access_point_ssh,
                                                private_key=private_key)
         return access_point_ssh

@@ -39,7 +39,6 @@ from tempest import config
 from tempest import exceptions
 from tempest.openstack.common import log
 from tempest.openstack.common import timeutils
-from pprint import pprint
 import tempest.test
 
 CONF = config.CONF
