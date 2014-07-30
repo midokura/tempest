@@ -230,7 +230,7 @@ class TestScenario(manager.NetworkScenarioTest):
     """
     def _build_gateway(self, tenant):
         network, subnet, router  = \
-        self._create_networks(tenant.tenant_id)
+        self._create_networks(tenant['id'])
         self.networks.append(network)
         self.subnets.append(subnet)
         self.routers.append(router)
