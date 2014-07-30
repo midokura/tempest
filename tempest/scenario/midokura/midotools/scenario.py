@@ -263,10 +263,17 @@ class TestScenario(manager.NetworkScenarioTest):
             'ip_address': server_ip,
             'subnet_id': self.gwsubnet['id'],
         }]
-        port_id = self._get_server_port_id(server, ip_addr=server_ip)
+        port_id = self._get_custom_server_port_id(server, ip_addr=server_ip)
         floating_ip = self._create_floating_ip(server, public_network_id, port_id)
         self.floating_ips.setdefault(server, floating_ip)
         self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
+
+    def _get_custom_server_port_id(self, server, ip_addr=None):
+        ports = self._list_ports(device_id=server.id, fixed_ip=ip_addr)
+        ports = [p for p in ports['ports'] if p['fixed_ips'][0]['ip_address']==ip_addr]
+        self.assertEqual(len(ports), 1,
+                         "Unable to determine which port to target.")
+        return ports[0]['id']
 
     def _connect_to_access_point(self, access_point):
         """

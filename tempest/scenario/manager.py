@@ -788,7 +788,6 @@ class NetworkScenarioTest(OfficialClientTest):
         return routers['routers']
 
     def _list_ports(self, **kwargs):
-        #pprint(kwargs['fixed_ip'])
         ports = self.network_client.list_ports(**kwargs)
         return ports['ports']
 
@@ -867,8 +866,7 @@ class NetworkScenarioTest(OfficialClientTest):
 
     def _get_server_port_id(self, server, ip_addr=None):
         ports = self._list_ports(device_id=server.id, fixed_ip=ip_addr)
-        ports = [p for p in ports if p['fixed_ips'][0]['ip_address']==ip_addr]
-        pprint(ports)
+
         self.assertEqual(len(ports), 1,
                          "Unable to determine which port to target.")
         return ports[0]['id']
