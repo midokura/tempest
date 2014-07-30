@@ -35,7 +35,7 @@ CONF = config.CONF
 LOG = logging.getLogger(__name__)
 CIDR1 = "10.10.1.0/24"
 
-class TestNetworkBasicVMConnectivity(manager.NetworkScenarioTest):
+class TestNetworkBasicVMConnectivity(scenario.TestScenario):
 
     @classmethod
     def setUpClass(cls):
