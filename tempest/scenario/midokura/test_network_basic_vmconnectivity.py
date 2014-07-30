@@ -27,7 +27,7 @@ VM should get a route for 169.254.169.254 (on non-cirros )
 from tempest.common import debug
 from tempest import config
 from tempest.openstack.common import log as logging
-from tempest.scenario import manager
+from tempest.scenario.midokura.midotools import scenario
 from tempest.test import services
 from tempest import test
 
