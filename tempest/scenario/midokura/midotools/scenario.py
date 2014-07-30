@@ -57,6 +57,7 @@ class TestScenario(manager.NetworkScenarioTest):
         self.networks = []
         self.subnets = []
         self.routers = []
+        self.floating_ips = {}
 
     def basic_scenario(self):
         self._create_keypairs()
