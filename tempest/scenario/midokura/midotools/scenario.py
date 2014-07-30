@@ -229,8 +229,7 @@ class TestScenario(manager.NetworkScenarioTest):
     GateWay methods
     """
     def _build_gateway(self, tenant):
-        network, subnet, router  = \
-        self._create_networks(tenant['id'])
+        network, subnet, router = self._create_networks(tenant['id'])
         self.networks.append(network)
         self.subnets.append(subnet)
         self.routers.append(router)
@@ -246,7 +245,7 @@ class TestScenario(manager.NetworkScenarioTest):
             tenant=tenant['name'])
         name = rand_name(name)
         server = self._create_server(name, network)
-        tenant.access_point = server
+        self.access_point = server
         self._assign_floating_ips(server)
 
     def _assign_floating_ips(self, server):
@@ -254,12 +253,12 @@ class TestScenario(manager.NetworkScenarioTest):
         floating_ip = self._create_floating_ip(server, public_network_id)
         self.floating_ips.setdefault(server, floating_ip)
 
-    def _connect_to_access_point(self, tenant):
+    def _connect_to_access_point(self, access_point):
         """
         create ssh connection to tenant access point
         """
         access_point_ssh = \
-            self.floating_ips[tenant.access_point].floating_ip_address
+            self.floating_ips[access_point].floating_ip_address
         private_key = tenant.keypair.private_key
         access_point_ssh = self._ssh_to_server(access_point_ssh,
                                                private_key=private_key)
