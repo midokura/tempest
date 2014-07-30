@@ -11,6 +11,7 @@ from tempest import config
 from neutronclient.common import exceptions as exc
 from pprint import pprint
 from tempest import test
+from tempest.scenario.midokura.midotools.admintools import TenantAdmin
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ class TestScenario(manager.NetworkScenarioTest):
                 msg = "%s extension not enabled." % ext
                 raise cls.skipException(msg)
         cls.check_preconditions()
+        cls.admin = TenantAdmin()
         cls.tenants = {}
 
     def setUp(self):
