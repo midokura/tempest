@@ -65,9 +65,11 @@ class TestScenario(manager.NetworkScenarioTest):
         self.networks = []
         self.subnets = []
         self.routers = []
+        self.tenants = []
         for tenant in scenario['tenants']:
             if tenant['type'] == 'default':
                 tenant_id = self.tenant_id
+                self.tenants[self.tenant_id] = self.tenant
             else:
                 tenant_id = self._create_tenant()
             """
