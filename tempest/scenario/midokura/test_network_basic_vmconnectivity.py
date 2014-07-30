@@ -78,7 +78,8 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         access_point_ssh = self._connect_to_access_point(self.access_point)
         for server in self.servers:
             dest = self._get_server_ip(server)
-            self._check_connectivity(access_point_ssh,dest)
+            self._check_connectivity(access_point=access_point_ssh,
+                                     ip=dest,)
             access_point_ssh.ping_host(dest)
 
     def _check_connectivity(self, access_point, ip, should_succeed=True):
@@ -99,4 +100,4 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
 
     @services('compute', 'network')
     def test_network_basic_vmconnectivity(self):
-        self._check_connectivity()
+        self._check_ip()
