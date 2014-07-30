@@ -241,6 +241,7 @@ class TestScenario(manager.NetworkScenarioTest):
         self.gwnetwork = network
         self.gwsubnet = subnet
         self.gwrouter = router
+        self.access_point = {}
         self._set_access_point(tenant, network)
 
     def _set_access_point(self, tenant, network):
