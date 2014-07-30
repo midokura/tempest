@@ -111,6 +111,19 @@ class TestScenario(manager.NetworkScenarioTest):
             ip_address, ssh_login, private_key, should_connect, msg,
             self.servers.keys())
 
+    def get_server_ip(self, server, network_name, floating=False):
+        """
+        returns the ip (floating/internal) of a server
+        """
+        if floating:
+            server_ip = self.floating_ips[server].floating_ip_address
+        else:
+            server_ip = None
+            #network_name = self.tenants[server.tenant_id].network.name
+            if network_name in server.networks:
+                server_ip = server.networks[network_name][0]
+        return server_ip
+
     def _create_tenant(self):
         # Create a tenant that is enabled
         tenant = self.admin.tenant_create_enabled()
@@ -198,13 +211,11 @@ class TestScenario(manager.NetworkScenarioTest):
             nics = []
             for network in self.networks:
                 nics.append({'net-id': network.id})
-                pprint(nics)
         create_kwargs = {
             'nics': nics,
             'key_name': keypair.name,
             'security_groups': security_groups,
         }
-        pprint(create_kwargs)
         server = self.create_server(name=name, create_kwargs=create_kwargs)
         return dict(server=server, keypair=keypair)
 
@@ -233,9 +244,9 @@ class TestScenario(manager.NetworkScenarioTest):
     """
     def _build_gateway(self, tenant):
         network, subnet, router = self._create_networks(tenant['id'])
-        self.networks.append(network)
-        self.subnets.append(subnet)
-        self.routers.append(router)
+        self.gwnetwork = network
+        self.gwsubnet = subnet
+        self.gwrouter = router
         self._set_access_point(tenant, network)
 
     def _set_access_point(self, tenant, network):
@@ -247,12 +258,13 @@ class TestScenario(manager.NetworkScenarioTest):
         name = 'server-{tenant}-access_point-'.format(
             tenant=tenant['name'])
         name = rand_name(name)
-        serv_dict = self._create_server(name, network,isgateway=True)
+        serv_dict = self._create_server(name, network, isgateway=True)
         self.access_point = serv_dict['server']
         self._assign_floating_ips(serv_dict['server'])
 
     def _assign_floating_ips(self, server):
         public_network_id = CONF.network.public_network_id
+        port_id = self._get_server_port_id(server, server.ip)
         floating_ip = self._create_floating_ip(server, public_network_id)
         self.floating_ips.setdefault(server, floating_ip)
         self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
@@ -267,3 +279,4 @@ class TestScenario(manager.NetworkScenarioTest):
         access_point_ssh = self._ssh_to_server(access_point_ssh,
                                                private_key=private_key)
         return access_point_ssh
+

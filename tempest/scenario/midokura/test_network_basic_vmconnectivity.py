@@ -77,7 +77,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         #tenant = self.tenants[self.tenant_id]
         access_point_ssh = self._connect_to_access_point(self.access_point)
         for server in self.servers:
-            dest = self._get_server_ip(server)
+            dest = self.get_server_ip(server, self.gwnetwork['name'])
             self._check_connectivity(access_point=access_point_ssh,
                                      ip=dest,)
             access_point_ssh.ping_host(dest)
