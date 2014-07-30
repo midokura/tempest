@@ -111,7 +111,7 @@ class TestScenario(manager.NetworkScenarioTest):
             ip_address, ssh_login, private_key, should_connect, msg,
             self.servers.keys())
 
-    def get_server_ip(self, server, network_name, floating=False):
+    def get_server_ip(self, server, isgateway=False, floating=False):
         """
         returns the ip (floating/internal) of a server
         """
@@ -119,7 +119,10 @@ class TestScenario(manager.NetworkScenarioTest):
             server_ip = self.floating_ips[server].floating_ip_address
         else:
             server_ip = None
-            #network_name = self.tenants[server.tenant_id].network.name
+            if isgateway:
+                network_name = self.gwnetwork['name']
+            else:
+                network_name = self.tenants[server.tenant_id].network.name
             if network_name in server.networks:
                 server_ip = server.networks[network_name][0]
         return server_ip
@@ -264,8 +267,9 @@ class TestScenario(manager.NetworkScenarioTest):
 
     def _assign_floating_ips(self, server):
         public_network_id = CONF.network.public_network_id
-        port_id = self._get_server_port_id(server, server.ip)
-        floating_ip = self._create_floating_ip(server, public_network_id)
+        server_ip = self.get_server_ip(server, isgateway=True)
+        port_id = self._get_server_port_id(server, server_ip)
+        floating_ip = self._create_floating_ip(server, public_network_id, port_id)
         self.floating_ips.setdefault(server, floating_ip)
         self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
 
