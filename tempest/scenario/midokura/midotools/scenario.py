@@ -59,14 +59,6 @@ class TestScenario(manager.NetworkScenarioTest):
         self.routers = []
         self.floating_ips = {}
 
-    def basic_scenario(self):
-        self._create_keypairs()
-        self._create_security_groups()
-        self._create_networks()
-        self._check_networks()
-        self._create_servers()
-        self._assign_floating_ips()
-
     def custom_scenario(self, scenario):
         tenant_id = None
         for tenant in scenario['tenants']:
@@ -211,7 +203,6 @@ class TestScenario(manager.NetworkScenarioTest):
             security_groups = [self.security_group.name]
         nics = [{'net-id': network.id}, ]
         if isgateway:
-            nics = []
             for network in self.networks:
                 nics.append({'net-id': network.id})
         create_kwargs = {
@@ -263,9 +254,9 @@ class TestScenario(manager.NetworkScenarioTest):
         name = rand_name(name)
         serv_dict = self._create_server(name, network, isgateway=True)
         self.access_point = serv_dict['server']
-        self._assign_floating_ips(serv_dict['server'])
+        self._assign_acces_point_floating_ip(serv_dict['server'])
 
-    def _assign_floating_ips(self, server):
+    def _assign_acces_point_floating_ip(self, server):
         public_network_id = CONF.network.public_network_id
         server_ip = self.get_server_ip(server, isgateway=True)
         port_id = self._get_server_port_id(server, server_ip)
