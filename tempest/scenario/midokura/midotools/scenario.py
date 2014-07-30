@@ -69,7 +69,7 @@ class TestScenario(manager.NetworkScenarioTest):
         for tenant in scenario['tenants']:
             if tenant['type'] == 'default':
                 tenant_id = self.tenant_id
-                self.tenants[self.tenant_id] = self.tenant
+                self.tenants[self.tenant_id] = self.primary_tenant
             else:
                 tenant_id = self._create_tenant()
             """
