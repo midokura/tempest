@@ -131,12 +131,6 @@ class TestScenario(manager.NetworkScenarioTest):
             subnets.append(subnet)
             if router:
                 subnet.add_to_router(router.id)
-        """
-        self.networks.append(network)
-        self.subnets.append(subnet)
-        if router:
-            self.routers.append(router)
-        """
         return network, subnets, router
 
     def _check_networks(self):
@@ -192,7 +186,7 @@ class TestScenario(manager.NetworkScenarioTest):
 
     def _create_server(self, name, network, security_groups=None, isgateway=None):
         keypair = self.create_keypair(name='keypair-%s' % name)
-        if security_groups in None:
+        if security_groups is None:
             security_groups = [self.security_group.name]
         nics = [{'net-id': network.id}, ]
         if isgateway:
