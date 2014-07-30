@@ -11,7 +11,6 @@ class TenantAdmin(object):
             self.client = os.identity_client
             self.tenants = []
 
-
     def tenant_create_enabled(self):
         # Create a tenant that is enabled
         tenant_name = rand_name(name='tenant-')
@@ -23,6 +22,12 @@ class TenantAdmin(object):
         self.tenants.append(tenant)
         return tenant
 
+    def get_tenant(self, tenant_id):
+        res, tenant = self.client.get_tenant(tenant_id)
+        self.tenants.append(tenant)
+        return tenant
+
     def teardown_all(self):
             for tenant in self.tenants:
                 self.client.delete_tenant(tenant['id'])
+            self.tenants = []

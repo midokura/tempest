@@ -46,11 +46,15 @@ class TestScenario(manager.NetworkScenarioTest):
                 msg = "%s extension not enabled." % ext
                 raise cls.skipException(msg)
         cls.check_preconditions()
+        cls.tenants = {}
 
     def setUp(self):
         super(TestScenario, self).setUp()
         self.cleanup_waits = []
         self.addCleanup(self._wait_for_cleanups)
+        self.networks = []
+        self.subnets = []
+        self.routers = []
 
     def basic_scenario(self):
         self._create_keypairs()
@@ -62,14 +66,10 @@ class TestScenario(manager.NetworkScenarioTest):
 
     def custom_scenario(self, scenario):
         tenant_id = None
-        self.networks = []
-        self.subnets = []
-        self.routers = []
-        self.tenants = []
         for tenant in scenario['tenants']:
             if tenant['type'] == 'default':
                 tenant_id = self.tenant_id
-                self.tenants[self.tenant_id] = self.primary_tenant
+                self.tenants[tenant_id] = self.admin.get_tenant(tenant_id)
             else:
                 tenant_id = self._create_tenant()
             """
