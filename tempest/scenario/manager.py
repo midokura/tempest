@@ -789,6 +789,10 @@ class NetworkScenarioTest(OfficialClientTest):
 
     def _list_ports(self, **kwargs):
         ports = self.network_client.list_ports(**kwargs)
+        pprint(ports)
+        for port in ports['ports']:
+            if port['fixed_ips'] is kwargs['fixed_ip']:
+                return port
         return ports['ports']
 
     def _get_tenant_own_network_num(self, tenant_id):
@@ -866,7 +870,6 @@ class NetworkScenarioTest(OfficialClientTest):
 
     def _get_server_port_id(self, server, ip_addr=None):
         ports = self._list_ports(device_id=server.id, fixed_ip=ip_addr)
-        pprint(ports)
         self.assertEqual(len(ports), 1,
                          "Unable to determine which port to target.")
         return ports[0]['id']
