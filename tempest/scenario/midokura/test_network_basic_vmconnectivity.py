@@ -76,7 +76,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
     def _check_ip(self):
         #tenant = self.tenants[self.tenant_id]
         access_point_ssh = self.connect_to_access_point(self.access_point)
-        ap_details, pk = self.access_point.popitem()
+        ap_details, pk = self.access_point
         networks = ap_details.networks
         for server in self.servers:
             for s_network in server.networks:
