@@ -255,7 +255,6 @@ class TestScenario(manager.NetworkScenarioTest):
         name = rand_name(name)
         serv_dict = self._create_server(name, network, isgateway=True)
         self.access_point[serv_dict['server']] = serv_dict['keypair']
-        pprint(self.access_point)
         self._assign_access_point_floating_ip(serv_dict['server'])
 
     def _assign_access_point_floating_ip(self, server):
@@ -282,10 +281,10 @@ class TestScenario(manager.NetworkScenarioTest):
         """
         create ssh connection to tenant access point
         """
-        pprint(access_point[0])
+        server, keypair = network.popitem()
         access_point_ssh = \
-            self.floating_ips[access_point['server']].floating_ip_address
-        private_key = access_point[access_point].private_key
+            self.floating_ips[server].floating_ip_address
+        private_key = keypair.private_key #access_point[access_point].private_key
         access_point_ssh = self._ssh_to_server(access_point_ssh,
                                                private_key=private_key)
         return access_point_ssh
