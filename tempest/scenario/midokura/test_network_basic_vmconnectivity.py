@@ -79,20 +79,18 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         access_point_ssh = self.connect_to_access_point(self.access_point)
         ap_details, pk = self.access_point.items()[0]
         networks = ap_details.networks
-        dest = ""
+
         pprint("networks : %s" % networks)
         for server in self.servers:
             pprint(server.networks)
             for s_network in server.networks:
                 if s_network in networks:
-                    ip = s_network.values()[0]
-                    dest = ip
+                    an_ip = s_network.values()[0]
                     raise Exception("I know python!")
-                    """
-                    self._check_connectivity(access_point=access_point_ssh,
-                                     ip=dest,)
+
+                    #self._check_connectivity(access_point=access_point_ssh, ip=an_ip,)
                     access_point_ssh.ping_host(dest)
-                    """
+
     def _check_connectivity(self, access_point, ip, should_succeed=True):
 
         LOG.info(pprint(ip))
