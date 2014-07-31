@@ -82,15 +82,11 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
 
         pprint("networks : %s" % networks)
         for server in self.servers:
-            pprint(server.networks)
-            for s_network in server.networks:
-                pprint(s_network)
-                if s_network in networks:
-                    name, an_ip = s_network.popitem()
-                    #pprint(an_ip)
-                    raise Exception(LOG.info("FAIL"))
-                    #self._check_connectivity(access_point=access_point_ssh, ip=an_ip[0],)
-                    #access_point_ssh.ping_host(dest)
+            an_ip = server.networks[networks.name].pop()
+            pprint(an_ip)
+            raise Exception(LOG.info("FAIL"))
+            #self._check_connectivity(access_point=access_point_ssh, ip=an_ip[0],)
+
 
     def _check_connectivity(self, access_point, ip, should_succeed=True):
         LOG.info(pprint(ip))
