@@ -87,7 +87,8 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
                 pprint("ip: %s" % an_ip)
             else:
                 LOG.info("FAIL - No ip for this network : %s" % name )
-                raise Exception("FAIL - No ip for this network : %s" % server.networks)
+                raise Exception("FAIL - No ip for this network : %s" \
+                                % server.networks)
 
 
 
