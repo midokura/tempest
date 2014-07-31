@@ -283,7 +283,7 @@ class TestScenario(manager.NetworkScenarioTest):
         """
         create ssh connection to tenant access point
         """
-        server, keypair = access_point
+        server, keypair = access_point[0]
         access_point_ssh = \
             self.floating_ips[server].floating_ip_address
         private_key = keypair.private_key #access_point[access_point].private_key
