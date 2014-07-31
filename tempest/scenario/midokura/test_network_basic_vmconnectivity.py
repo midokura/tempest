@@ -84,7 +84,11 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
                 an_ip = server.networks[name].pop()
                 self._check_connectivity(access_point=access_point_ssh,
                                          ip=an_ip)
-                pprint("ip: %s" % an_ip)
+                try:
+                    access_point_ssh.exec_command("ssh %s -c /bin/ip address" % an_ip)
+                except Exception:
+                    LOG.info("Failed double ssh")
+                    raise
             else:
                 LOG.info("FAIL - No ip for this network : %s" % name )
                 raise Exception("FAIL - No ip for this network : %s"
