@@ -103,6 +103,7 @@ class TestScenario(manager.NetworkScenarioTest):
             ip_address, ssh_login, private_key, should_connect, msg,
             self.servers.keys())
 
+    #does not work for non floating ips, needs refactor
     def get_server_ip(self, server, isgateway=False, floating=False):
         """
         returns the ip (floating/internal) of a server
