@@ -30,6 +30,7 @@ from tempest.openstack.common import log as logging
 from tempest.scenario.midokura.midotools import scenario
 from tempest.test import services
 from tempest import test
+from pprint import pprint
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -78,15 +79,18 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         access_point_ssh = self.connect_to_access_point(self.access_point)
         ap_details, pk = self.access_point.items()[0]
         networks = ap_details.networks
+        dest = ""
         for server in self.servers:
             for s_network in server.networks:
                 if s_network in networks:
+                    pprint(s_network)
                     dest = s_network[0]
-                self._check_connectivity(access_point=access_point_ssh,
+                    self._check_connectivity(access_point=access_point_ssh,
                                      ip=dest,)
-                access_point_ssh.ping_host(dest)
+                    access_point_ssh.ping_host(dest)
 
     def _check_connectivity(self, access_point, ip, should_succeed=True):
+        pprint(ip)
         if should_succeed:
             msg = "Timed out waiting for %s to become reachable" % ip
         else:
