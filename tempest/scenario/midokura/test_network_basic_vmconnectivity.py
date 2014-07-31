@@ -82,10 +82,10 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         dest = ""
         for server in self.servers:
             pprint(server.networks)
-            for s_network in server.networks:
+            for s_network, ip in server.networks:
                 if s_network in networks:
-
-                    dest = s_network[0]
+                    pprint(ip)
+                    dest = ip
                     raise Exception("I know python!")
                     """
                     self._check_connectivity(access_point=access_point_ssh,
