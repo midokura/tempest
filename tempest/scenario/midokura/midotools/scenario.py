@@ -107,6 +107,7 @@ class TestScenario(manager.NetworkScenarioTest):
         """
         returns the ip (floating/internal) of a server
         """
+        pprint(server)
         if floating:
             server_ip = self.floating_ips[server].floating_ip_address
         else:
