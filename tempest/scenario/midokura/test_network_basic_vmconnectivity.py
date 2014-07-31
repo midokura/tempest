@@ -82,10 +82,12 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         for server in self.servers:
             if name in server.networks.keys():
                 an_ip = server.networks[name].pop()
-                self._check_connectivity(access_point=access_point_ssh, ip=an_ip[0],)
+                self._check_connectivity(access_point=access_point_ssh,
+                                         ip=an_ip)
                 pprint("ip: %s" % an_ip)
             else:
-                raise Exception(LOG.info("FAIL - No ip for this network : %s" % name ))
+                LOG.info("FAIL - No ip for this network : %s" % name )
+                raise Exception("FAIL - No ip for this network : %s" % server.networks)
 
 
 
