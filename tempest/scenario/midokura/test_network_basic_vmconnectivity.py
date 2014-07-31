@@ -83,14 +83,14 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         for server in self.servers:
             for s_network in server.networks:
                 if s_network in networks:
-                    pprint(s_network)
+                    pprint(s_network.__dict__)
                     dest = s_network[0]
                     self._check_connectivity(access_point=access_point_ssh,
                                      ip=dest,)
                     access_point_ssh.ping_host(dest)
 
     def _check_connectivity(self, access_point, ip, should_succeed=True):
-        pprint(ip)
+
         LOG.info(pprint(ip))
         if should_succeed:
             msg = "Timed out waiting for %s to become reachable" % ip
