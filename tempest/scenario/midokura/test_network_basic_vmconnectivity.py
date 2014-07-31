@@ -83,11 +83,9 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         pprint("networks : %s" % networks)
         for server in self.servers:
             pprint(server.networks)
-            for s_network, ip in server.networks:
-                pprint(s_network)
-                pprint(ip)
+            for s_network in server.networks:
                 if s_network in networks:
-                    #pprint(ip)
+                    ip = s_network.values()[0]
                     dest = ip
                     raise Exception("I know python!")
                     """
