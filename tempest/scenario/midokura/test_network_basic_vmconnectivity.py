@@ -80,6 +80,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         ap_details, pk = self.access_point.items()[0]
         networks = ap_details.networks
         name = networks.keys()[0]
+        pprint(name)
         for server in self.servers:
             pprint(server.networks)
             #an_ip = server.networks[name].pop()
