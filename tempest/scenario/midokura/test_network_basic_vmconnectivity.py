@@ -83,7 +83,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         pprint(name)
         for server in self.servers:
             pprint(server.networks)
-            if name in server.networks:
+            if name in server.networks.keys():
                 an_ip = server.networks[name].pop()
                 pprint("ip: %s" % an_ip)
             else:
