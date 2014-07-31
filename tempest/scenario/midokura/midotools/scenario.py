@@ -286,9 +286,10 @@ class TestScenario(manager.NetworkScenarioTest):
         server, keypair = access_point.items()[0]
         access_point_ssh = \
             self.floating_ips[server].floating_ip_address
-        private_key = keypair.private_key #access_point[access_point].private_key
+        private_key = keypair.private_key
         access_point_ssh = self._ssh_to_server(access_point_ssh,
                                                private_key=private_key)
-        access_point_ssh.exec_command("sudo udhcpc -i eth1")
+        #fix for cirros image
+        access_point_ssh.exec_command("sudo /sbin/udhcpc -i eth1")
         return access_point_ssh
 
