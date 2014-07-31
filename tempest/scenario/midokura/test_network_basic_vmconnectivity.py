@@ -80,11 +80,14 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         ap_details, pk = self.access_point.items()[0]
         networks = ap_details.networks
         dest = ""
+        pprint("networks : %s" % networks)
         for server in self.servers:
             pprint(server.networks)
             for s_network, ip in server.networks:
+                pprint(s_network)
+                pprint(ip)
                 if s_network in networks:
-                    pprint(ip)
+                    #pprint(ip)
                     dest = ip
                     raise Exception("I know python!")
                     """
