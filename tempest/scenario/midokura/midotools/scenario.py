@@ -289,6 +289,6 @@ class TestScenario(manager.NetworkScenarioTest):
         private_key = keypair.private_key #access_point[access_point].private_key
         access_point_ssh = self._ssh_to_server(access_point_ssh,
                                                private_key=private_key)
-        access_point.exec_command("sudo udhcpc -i eth1")
+        access_point_ssh.exec_command("sudo udhcpc -i eth1")
         return access_point_ssh
 
