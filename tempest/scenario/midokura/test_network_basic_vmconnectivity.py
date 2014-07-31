@@ -81,6 +81,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         networks = ap_details.networks
         name = networks.keys()[0]
         for server in self.servers:
+            pprint(server.networks[name])
             an_ip = server.networks[name].pop()
             pprint("ip: %s" % an_ip)
             raise Exception(LOG.info("FAIL"))
