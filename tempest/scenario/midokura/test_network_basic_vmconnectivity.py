@@ -92,7 +92,6 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
                     #access_point_ssh.ping_host(dest)
 
     def _check_connectivity(self, access_point, ip, should_succeed=True):
-
         LOG.info(pprint(ip))
         if should_succeed:
             msg = "Timed out waiting for %s to become reachable" % ip
