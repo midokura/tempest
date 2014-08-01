@@ -300,12 +300,13 @@ class TestScenario(manager.NetworkScenarioTest):
             server, keypair = self.access_point.items()[0]
             pkey = keypair.private_key
             fip = self.get_server_ip(server,floating=True)
+            pprint(pkey)
             options = {
                 'user': 'cirros',
                 'password': 'cubswin:)',
                 'keyfile': None,
                 'look_for_keys': False,
-                'pkey': pkey,
+                'pkey': None,
                 }
             self.Forwarding = Forward()
             self.Forwarding.build_tunnel(options, fip, remote_ip)
