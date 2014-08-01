@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
+# Copyright (C) 2008  Robey Pointer <robeypointer@gmail.com>
 #
 # This file is part of paramiko.
 #
@@ -19,61 +19,47 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-Sample script showing how to do local port forwarding over paramiko.
+Sample script showing how to do remote port forwarding over paramiko.
 
-This script connects to the requested SSH server and sets up local port
-forwarding (the openssh -L option) from a local port through a tunneled
-connection to a destination reachable from the SSH server machine.
+This script connects to the requested SSH server and sets up remote port
+forwarding (the openssh -R option) from a remote port through a tunneled
+connection to a destination reachable from the local machine.
 """
 
 import getpass
 import os
 import socket
 import select
-try:
-    import SocketServer
-except ImportError:
-    import socketserver as SocketServer
-
 import sys
+import threading
 from optparse import OptionParser
 
 import paramiko
 
-SSH_PORT = 22
-DEFAULT_PORT = 4000
 
-g_verbose = True
+class Forward(object):
 
-
-class ForwardServer (SocketServer.ThreadingTCPServer):
-    daemon_threads = True
-    allow_reuse_address = True
+    def __int__(self):
+        self.SSH_PORT = 22
+        self.DEFAULT_PORT = 4000
+        self.g_verbose = True
 
 
-class Handler (SocketServer.BaseRequestHandler):
-
-    def handle(self):
+    def _handler(self, chan, host, port):
+        sock = socket.socket()
         try:
-            chan = self.ssh_transport.open_channel('direct-tcpip',
-                                                   (self.chain_host, self.chain_port),
-                                                   self.request.getpeername())
+            sock.connect((host, port))
         except Exception as e:
-            verbose('Incoming request to %s:%d failed: %s' % (self.chain_host,
-                                                              self.chain_port,
-                                                              repr(e)))
-            return
-        if chan is None:
-            verbose('Incoming request to %s:%d was rejected by the SSH server.' %
-                    (self.chain_host, self.chain_port))
+            self._verbose('Forwarding request to %s:%d failed: %r' % (host, port, e))
             return
 
-        verbose('Connected!  Tunnel open %r -> %r -> %r' % (self.request.getpeername(),
-                                                            chan.getpeername(), (self.chain_host, self.chain_port)))
+        self._verbose('Connected!  Tunnel open %r -> %r -> %r' % (chan.origin_addr,
+                                                                chan.getpeername(),
+                                                                (host, port)))
         while True:
-            r, w, x = select.select([self.request, chan], [], [])
-            if self.request in r:
-                data = self.request.recv(1024)
+            r, w, x = select.select([sock, chan], [], [])
+            if sock in r:
+                data = sock.recv(1024)
                 if len(data) == 0:
                     break
                 chan.send(data)
@@ -81,44 +67,63 @@ class Handler (SocketServer.BaseRequestHandler):
                 data = chan.recv(1024)
                 if len(data) == 0:
                     break
-                self.request.send(data)
-
-        peername = self.request.getpeername()
+                sock.send(data)
         chan.close()
-        self.request.close()
-        verbose('Tunnel closed from %r' % (peername,))
+        sock.close()
+        self._verbose('Tunnel closed from %r' % (chan.origin_addr,))
 
 
-def forward_tunnel(local_port, remote_host, remote_port, transport):
-    # this is a little convoluted, but lets me configure things for the Handler
-    # object.  (SocketServer doesn't give Handlers any way to access the outer
-    # server normally.)
-    class SubHander (Handler):
-        chain_host = remote_host
-        chain_port = remote_port
-        ssh_transport = transport
-    ForwardServer(('', local_port), SubHander).serve_forever()
+    def _reverse_forward_tunnel(self, server_port, remote_host, remote_port, transport):
+        transport.request_port_forward('', server_port)
+        while True:
+            chan = transport.accept(1000)
+            if chan is None:
+                continue
+            thr = threading.Thread(target=self._handler, args=(chan, remote_host, remote_port))
+            thr.setDaemon(True)
+            thr.start()
 
+    def _verbose(self, s):
+        if self.g_verbose:
+            print(s)
 
-def get_host_port(spec, default_port):
-    "parse 'hostname:22' into a host and port, with the port optional"
-    args = (spec.split(':', 1) + [default_port])[:2]
-    args[1] = int(args[1])
-    return args[0], args[1]
+    def build_tunnel(self, options, server_ip, remote_ip):
+        #options, server, remote = parse_options()
+        """
+        :param options: {verbose: True, user: getpass.getuser(), keyfile: None, password: None, look_for_keys=True }
+        :param server: (server_host, server_port)
+        :param remote: (remote_host, remote_port)
+        :return:
+        """
 
+        server = (server_ip, self.SSH_PORT)
+        remote = (remote_ip, self.SSH_PORT)
 
-def set_tunnel(client, password, remote_ip):
+        #should be mandatory for currios?
+        if options.password:
+            password = options.password
+        #if options.readpass:
+        #    password = getpass.getpass('Enter SSH password: ')
 
-    try:
-        client.connect(server[0], server[1], username="cirros", key_filename=options.keyfile,
-                       look_for_keys=False, password=password)
-    except Exception as e:
-        print('*** Failed to connect to %s:%d: %r' % (server[0], server[1], e))
-        sys.exit(1)
+        client = paramiko.SSHClient()
+        #do I need this? how to integrate it with our system/tempest ?
+        client.load_system_host_keys()
+        client.set_missing_host_key_policy(paramiko.WarningPolicy())
 
-    try:
-        forward_tunnel(4000, remote_ip, 22, client.get_transport())
-    except KeyboardInterrupt:
-        print('C-c: Port forwarding stopped.')
-        sys.exit(0)
+        self._verbose('Connecting to ssh host %s:%d ...' % (server[0], server[1]))
+        try:
+            client.connect(server[0], server[1], username=options.user, key_filename=options.keyfile,
+                           look_for_keys=options.look_for_keys, password=password)
+        except Exception as e:
+            print('*** Failed to connect to %s:%d: %r' % (server[0], server[1], e))
+            sys.exit(1)
+
+        self._verbose('Now forwarding remote port %d to %s:%d ...' % (options.port, remote[0], remote[1]))
+
+        try:
+            self._reverse_forward_tunnel(options.port, remote[0], remote[1], client.get_transport())
+        except KeyboardInterrupt:
+            print('C-c: Port forwarding stopped.')
+            sys.exit(0)
+
 

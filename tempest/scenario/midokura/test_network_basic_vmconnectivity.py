@@ -49,6 +49,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             self._create_security_group_neutron(tenant_id=self.tenant_id)
         self._scenario_conf()
         self.custom_scenario(self.scenario)
+        self.gatewayssh = None
 
     def _scenario_conf(self):
         serverB = {
@@ -81,20 +82,15 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         name = networks.keys()[0]
         for server in self.servers:
             if name in server.networks.keys():
-                an_ip = server.networks[name].pop()
+                an_ip = server.networks[name][0]
                 self._check_connectivity(access_point=access_point_ssh,
                                          ip=an_ip)
-                try:
-                    access_point_ssh.exec_command("ssh %s -c /bin/ip address" % an_ip)
-                except Exception:
-                    LOG.info("Failed double ssh")
-                    raise
+                self.gatewayssh = access_point_ssh
+                return True
             else:
                 LOG.info("FAIL - No ip for this network : %s" % name )
-                raise Exception("FAIL - No ip for this network : %s"
-                                % server.networks)
-
-
+            raise Exception("FAIL - No ip for this network : %s"
+                            % server.networks)
 
     def _check_connectivity(self, access_point, ip, should_succeed=True):
         LOG.info(pprint(ip))
@@ -112,7 +108,14 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             debug.log_net_debug()
             raise
 
+    def _remote_serious_test(self):
+        self.setup_tunnel()
+        pprint(self.gatewayssh.get_ip_list())
+        raise Exception("MAJOR FAIL")
+        return True
+
 
     @services('compute', 'network')
     def test_network_basic_vmconnectivity(self):
-        self._check_ip()
+        self.assertTrue(self._check_ip())
+        self.assertTre(self._remote_serious_test())

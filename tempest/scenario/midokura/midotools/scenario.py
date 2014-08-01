@@ -12,6 +12,7 @@ from neutronclient.common import exceptions as exc
 from pprint import pprint
 from tempest import test
 from tempest.scenario.midokura.midotools.admintools import TenantAdmin
+from tempest.scenario.midokura.midotools.forward import Forward
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -104,7 +105,7 @@ class TestScenario(manager.NetworkScenarioTest):
             self.servers.keys())
 
     #does not work for non floating ips, needs refactor
-    def get_server_ip(self, server, isgateway=False, floating=False):
+    def get_server_ip(self, server=None, isgateway=False, floating=False):
         """
         returns the ip (floating/internal) of a server
         """
@@ -261,7 +262,7 @@ class TestScenario(manager.NetworkScenarioTest):
 
     def _assign_access_point_floating_ip(self, server):
         public_network_id = CONF.network.public_network_id
-        server_ip = self.get_server_ip(server, isgateway=True)
+        server_ip = self.get_server_ip(isgateway=True)
         port_id = self._get_custom_server_port_id(server, ip_addr=server_ip)
         floating_ip = self._create_floating_ip(server, public_network_id, port_id)
         self.floating_ips.setdefault(server, floating_ip)
@@ -292,4 +293,16 @@ class TestScenario(manager.NetworkScenarioTest):
         #fix for cirros image
         access_point_ssh.exec_command("sudo /sbin/udhcpc -i eth1")
         return access_point_ssh
+
+    def setup_tunnel(self, remote_ip):
+        if self.access_point:
+            options = {
+                'user': 'cirros',
+                'password': 'cubswin:)',
+                'keyfile': None,
+                'look_for_keys': False,
+                }
+            self.Forwarding = Forward()
+            self.Forwarding.build_tunnel(options, self.get_server_ip(isgateway=True), remote_ip)
+
 
