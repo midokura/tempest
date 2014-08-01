@@ -25,8 +25,6 @@ This script connects to the requested SSH server and sets up remote port
 forwarding (the openssh -R option) from a remote port through a tunneled
 connection to a destination reachable from the local machine.
 """
-
-i
 import socket
 import select
 import sys
@@ -39,6 +37,7 @@ import paramiko
 LOG = logging.getLogger(__name__)
 
 class Forward(object):
+
     def __int__(self):
         self.SSH_PORT = 22
         self.DEFAULT_PORT = 4000
