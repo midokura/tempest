@@ -104,7 +104,8 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             result = access_point_ssh.get_ip_list()
             pprint("The ip is: %s" % result)
         except Exception:
-            debug.log_ip_ns()
+            LOG.info(Exception.message)
+            #debug.log_ip_ns()
             raise
 
     def _check_connectivity(self, access_point, ip, should_succeed=True):
