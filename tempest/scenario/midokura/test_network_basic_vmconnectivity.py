@@ -78,13 +78,11 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
     def _check_ip(self):
         access_point_ssh = self.connect_to_access_point(self.access_point)
         ap_details = self.access_point.keys()[0]
-        pprint(ap_details)
         networks = ap_details.networks
-        name = networks.keys()[0]
-        pprint(name)
         for server in self.servers:
-            pprint(server.networks)
-            if name in server.networks.keys():
+            #servers should only have 1 network
+            name = server.networks.keys()[0]
+            if any(i in networks.keys() for i in server.networks.keys()):
                 pprint(server.networks)
                 an_ip = server.networks[name][0]
                 pprint(an_ip)
