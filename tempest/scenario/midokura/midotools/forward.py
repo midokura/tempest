@@ -105,7 +105,7 @@ class Forward(object):
 
         #should be mandatory for cirros?
         pprint(options)
-        if options.password:
+        if options['password']:
             password = options['password']
         #if options.readpass:
         #    password = getpass.getpass('Enter SSH password: ')
