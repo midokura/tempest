@@ -116,6 +116,7 @@ class TestScenario(manager.NetworkScenarioTest):
             server_ip = None
             if isgateway:
                 network_name = self.gwnetwork['name']
+                server = self.access_point.keys()[0]
             else:
                 network_name = self.tenants[server.tenant_id].network.name
             if network_name in server.networks:
