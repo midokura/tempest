@@ -297,8 +297,9 @@ class TestScenario(manager.NetworkScenarioTest):
 
     def setup_tunnel(self, remote_ip):
         if self.access_point:
-            pkey = self.access_point.values()[0]
-            fip = self.get_server_ip(self.access_point.keys()[0],floating=True)
+            server, keypair = self.access_point.items()[0]
+            pkey = keypair.private_key
+            fip = self.get_server_ip(server,floating=True)
             options = {
                 'user': 'cirros',
                 'password': 'cubswin:)',
