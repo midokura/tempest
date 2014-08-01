@@ -132,10 +132,10 @@ class Forward(object):
             print('*** Failed to connect to %s:%d: %r' % (server[0], server[1], e))
             sys.exit(1)
 
-        self._verbose('Now forwarding remote port %d to %s:%d ...' % (options.port, remote[0], remote[1]))
+        self._verbose('Now forwarding remote port %d to %s:%d ...' % (self.DEFAULT_PORT, remote[0], remote[1]))
 
         try:
-            self._reverse_forward_tunnel(options.port, remote[0], remote[1], client.get_transport())
+            self._reverse_forward_tunnel(self.DEFAULT_PORT, remote[0], remote[1], client.get_transport())
         except KeyboardInterrupt:
             print('C-c: Port forwarding stopped.')
             sys.exit(0)
