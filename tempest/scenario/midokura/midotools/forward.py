@@ -38,10 +38,10 @@ LOG = logging.getLogger(__name__)
 
 class Forward(object):
 
-    def __int__(self):
-        self.SSH_PORT = 22
-        self.DEFAULT_PORT = 4000
-        self.g_verbose = True
+    def __int__(cls):
+        cls.SSH_PORT = 22
+        cls.DEFAULT_PORT = 4000
+        cls.g_verbose = True
 
     def _handler(self, chan, host, port):
         sock = socket.socket()
@@ -95,7 +95,7 @@ class Forward(object):
         :param remote: (remote_host, remote_port)
         :return:
         """
-
+        pprint("in the build tunnel")
         server = (server_ip, self.SSH_PORT)
         pprint(server)
         remote = (remote_ip, self.SSH_PORT)
