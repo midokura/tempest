@@ -49,7 +49,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             self._create_security_group_neutron(tenant_id=self.tenant_id)
         self._scenario_conf()
         self.custom_scenario(self.scenario)
-        self.gatewayssh = None
+
 
     def _scenario_conf(self):
         serverB = {
@@ -80,13 +80,15 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         ap_details, pk = self.access_point.items()[0]
         networks = ap_details.networks
         name = networks.keys()[0]
+        pprint(name)
         for server in self.servers:
             if name in server.networks.keys():
                 an_ip = server.networks[name][0]
                 pprint(an_ip)
                 self._check_connectivity(access_point=access_point_ssh,
                                          ip=an_ip)
-                self.gatewayssh = access_point_ssh
+                self.setup_tunnel(an_ip)
+                pprint(access_point_ssh.get_ip_list())
                 return True
             else:
                 LOG.info("FAIL - No ip connectivity to the server ip: %s" % server.networks[name][0])
@@ -109,14 +111,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             debug.log_net_debug()
             raise
 
-    def _remote_serious_test(self):
-        self.setup_tunnel()
-        pprint(self.gatewayssh.get_ip_list())
-        raise Exception("MAJOR FAIL")
-        return True
-
-
     @services('compute', 'network')
     def test_network_basic_vmconnectivity(self):
         self.assertTrue(self._check_ip())
-        self.assertTrue(self._remote_serious_test())
+
