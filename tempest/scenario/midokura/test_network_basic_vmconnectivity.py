@@ -120,4 +120,4 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
     @services('compute', 'network')
     def test_network_basic_vmconnectivity(self):
         self.assertTrue(self._check_ip())
-        self.assertTre(self._remote_serious_test())
+        self.assertTrue(self._remote_serious_test())
