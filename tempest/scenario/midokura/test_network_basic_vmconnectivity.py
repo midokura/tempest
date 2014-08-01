@@ -83,6 +83,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         pprint(name)
         for server in self.servers:
             if name in server.networks.keys():
+                pprint(server.networks.keys())
                 an_ip = server.networks[name][0]
                 pprint(an_ip)
                 self._check_connectivity(access_point=access_point_ssh,
