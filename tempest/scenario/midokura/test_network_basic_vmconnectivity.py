@@ -103,7 +103,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         try:
             self.setup_tunnel(remote_ip)
             result = access_point_ssh.get_ip_list()
-            pprint("The ip is: %s" % result)
+            pprint(result)
         except Exception as inst:
             LOG.info(inst.args)
             LOG.info
