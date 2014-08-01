@@ -61,7 +61,8 @@ class TestAdminStateUp(scenario.TestScenario):
         tenantA = {
             'networks': [networkA],
             'tenant_id': None,
-            'type': 'default'
+            'type': 'default',
+            'hasgateway': False
         }
         self.scenario = {
             'tenants': [tenantA],
