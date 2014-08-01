@@ -89,10 +89,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
                 self._check_connectivity(access_point=access_point_ssh,
                                          ip=an_ip)
                 LOG.info("Setting up the Link: ")
-                self.setup_tunnel(an_ip)
-                LOG.info("Trying to get the list of ips")
-                result = access_point_ssh.get_ip_list()
-                pprint("The ip is: %s" % result)
+                self._seriouse_test(remote_ip=an_ip)
                 return True
             else:
                 LOG.info("FAIL - No ip connectivity to the server ip: %s" % server.networks[name][0])
@@ -100,7 +97,15 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
                             % server.networks)
 
     def _seriouse_test(self, remote_ip):
-
+        access_point_ssh = self.connect_to_access_point(self.access_point)
+        LOG.info("Trying to get the list of ips")
+        try:
+            self.setup_tunnel(remote_ip)
+            result = access_point_ssh.get_ip_list()
+            pprint("The ip is: %s" % result)
+        except Exception:
+            debug.log_ip_ns()
+            raise
 
     def _check_connectivity(self, access_point, ip, should_succeed=True):
         LOG.info("checking connectivity to ip: %s " % ip)
