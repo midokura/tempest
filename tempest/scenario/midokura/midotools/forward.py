@@ -102,7 +102,8 @@ class Forward(object):
         server = (server_ip, self.SSH_PORT)
         remote = (remote_ip, self.SSH_PORT)
 
-        #should be mandatory for currios?
+        #should be mandatory for cirros?
+        pprint(options)
         if options.password:
             password = options.password
         #if options.readpass:
