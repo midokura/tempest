@@ -106,7 +106,7 @@ class Forward(object):
         #should be mandatory for cirros?
         pprint(options)
         if options.password:
-            password = options.password
+            password = options['password']
         #if options.readpass:
         #    password = getpass.getpass('Enter SSH password: ')
 
@@ -117,8 +117,8 @@ class Forward(object):
 
         self._verbose('Connecting to ssh host %s:%d ...' % (server[0], server[1]))
         try:
-            client.connect(server[0], server[1], username=options.user, key_filename=options.keyfile,
-                           look_for_keys=options.look_for_keys, password=password)
+            client.connect(server[0], server[1], username=options['user'], key_filename=options['keyfile'],
+                           look_for_keys=options['look_for_keys'], password=password)
         except Exception as e:
             print('*** Failed to connect to %s:%d: %r' % (server[0], server[1], e))
             sys.exit(1)
