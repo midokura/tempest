@@ -32,6 +32,7 @@ import socket
 import select
 import sys
 import threading
+from pprint import pprint
 from optparse import OptionParser
 
 import paramiko
