@@ -76,7 +76,6 @@ class Forward(object):
         sock.close()
         self._verbose('Tunnel closed from %r' % (chan.origin_addr,))
 
-
     def _reverse_forward_tunnel(self, server_port, remote_host, remote_port, transport):
         transport.request_port_forward('', server_port)
         while True:
