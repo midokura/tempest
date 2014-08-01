@@ -102,20 +102,32 @@ class Forward(object):
 
         #should be mandatory for cirros?
         pprint(options)
-        if options['password']:
+        if options['password'] is not None:
             password = options['password']
         #if options.readpass:
         #    password = getpass.getpass('Enter SSH password: ')
 
         client = paramiko.SSHClient()
         #do I need this? how to integrate it with our system/tempest ?
-        client.load_system_host_keys()
-        client.set_missing_host_key_policy(paramiko.WarningPolicy())
+        #client.load_system_host_keys()
+        client.set_missing_host_key_policy(
+            paramiko.AutoAddPolicy())
+
+        if options['pkey'] is not None:
+            LOG.info("Creating ssh connection to '%s' as '%s'"
+                     " with public key authentication",
+                     server[0], options['user'])
+        else:
+            LOG.info("Creating ssh connection to '%s' as '%s'"
+                     " with password %s",
+                     server[0], options['user'], str(options['password']))
 
         self._verbose('Connecting to ssh host %s:%d ...' % (server[0], server[1]))
         try:
-            client.connect(server[0], server[1], username=options['user'], key_filename=options['keyfile'],
-                           look_for_keys=options['look_for_keys'], password=password, pkey=options['pkey'])
+            client.connect(server[0], server[1], username=options['user'],
+                           key_filename=options['keyfile'],
+                           look_for_keys=options['look_for_keys'], password=password,
+                           pkey=options['pkey'])
         except Exception as e:
             print('*** Failed to connect to %s:%d: %r' % (server[0], server[1], e))
             sys.exit(1)
