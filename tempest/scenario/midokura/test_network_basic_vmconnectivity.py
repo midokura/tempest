@@ -80,7 +80,6 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         ap_details, pk = self.access_point.items()[0]
         networks = ap_details.networks
         name = networks.keys()[0]
-        an_ip = ""
         for server in self.servers:
             if name in server.networks.keys():
                 an_ip = server.networks[name][0]
@@ -90,7 +89,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
                 self.gatewayssh = access_point_ssh
                 return True
             else:
-                LOG.info("FAIL - No ip connectivity to %s" % an_ip)
+                LOG.info("FAIL - No ip connectivity to the server: %s" % server.__dict__)
             raise Exception("FAIL - No ip for this network : %s"
                             % server.networks)
 
