@@ -39,11 +39,14 @@ import paramiko
 
 class Forward(object):
 
+    SSH_PORT = None
+    DEFAULT_PORT = None
+    g_verbose = None
+
     def __int__(self):
         self.SSH_PORT = 22
         self.DEFAULT_PORT = 4000
         self.g_verbose = True
-
 
     def _handler(self, chan, host, port):
         sock = socket.socket()
