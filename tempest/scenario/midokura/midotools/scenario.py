@@ -297,11 +297,13 @@ class TestScenario(manager.NetworkScenarioTest):
 
     def setup_tunnel(self, remote_ip):
         if self.access_point:
+            pkey = self.access_point.values()[0]
             options = {
                 'user': 'cirros',
                 'password': 'cubswin:)',
                 'keyfile': None,
                 'look_for_keys': False,
+                'pkey': pkey,
                 }
             self.Forwarding = Forward()
             self.Forwarding.build_tunnel(options, self.get_server_ip(isgateway=True), remote_ip)

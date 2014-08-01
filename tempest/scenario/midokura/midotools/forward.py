@@ -26,24 +26,19 @@ forwarding (the openssh -R option) from a remote port through a tunneled
 connection to a destination reachable from the local machine.
 """
 
-import getpass
-import os
+i
 import socket
 import select
 import sys
 import threading
 from pprint import pprint
-from optparse import OptionParser
+from tempest.openstack.common import log as logging
 
 import paramiko
 
+LOG = logging.getLogger(__name__)
 
 class Forward(object):
-
-    SSH_PORT = None
-    DEFAULT_PORT = None
-    g_verbose = None
-
     def __int__(self):
         self.SSH_PORT = 22
         self.DEFAULT_PORT = 4000
@@ -88,18 +83,22 @@ class Forward(object):
 
     def _verbose(self, s):
         if self.g_verbose:
-            print(s)
+            pprint(s)
+            LOG.info(s)
 
     def build_tunnel(self, options, server_ip, remote_ip):
         #options, server, remote = parse_options()
         """
-        :param options: {verbose: True, user: getpass.getuser(), keyfile: None, password: None, look_for_keys=True }
+        :param options: {verbose: True, user: getpass.getuser(),
+                        keyfile: None, pkey: pkeyfile,
+                        password: None, look_for_keys=True }
         :param server: (server_host, server_port)
         :param remote: (remote_host, remote_port)
         :return:
         """
 
         server = (server_ip, self.SSH_PORT)
+        pprint(server)
         remote = (remote_ip, self.SSH_PORT)
 
         #should be mandatory for cirros?
@@ -117,7 +116,7 @@ class Forward(object):
         self._verbose('Connecting to ssh host %s:%d ...' % (server[0], server[1]))
         try:
             client.connect(server[0], server[1], username=options['user'], key_filename=options['keyfile'],
-                           look_for_keys=options['look_for_keys'], password=password)
+                           look_for_keys=options['look_for_keys'], password=password, pkey=options['pkey'])
         except Exception as e:
             print('*** Failed to connect to %s:%d: %r' % (server[0], server[1], e))
             sys.exit(1)
