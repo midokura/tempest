@@ -38,7 +38,7 @@ LOG = logging.getLogger(__name__)
 
 class Forward(object):
 
-    def __int__(cls):
+    def __init__(cls):
         cls.SSH_PORT = 22
         cls.DEFAULT_PORT = 4000
         cls.g_verbose = True
