@@ -269,7 +269,7 @@ class TestScenario(manager.NetworkScenarioTest):
         serv_dict = self._create_server(name, network, isgateway=True)
         self.access_point[serv_dict['server']] = serv_dict['keypair']
         self._assign_access_point_floating_ip(serv_dict['server'])
-        self._set_gw_security_group(serv_dict['server'])
+        #self._set_gw_security_group(serv_dict['server'])
 
     def _assign_access_point_floating_ip(self, server):
         public_network_id = CONF.network.public_network_id
