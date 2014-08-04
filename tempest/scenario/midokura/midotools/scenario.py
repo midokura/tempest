@@ -294,7 +294,8 @@ class TestScenario(manager.NetworkScenarioTest):
         )
         self._create_security_group_rule(secgroup=gw_sg, **ssh_rule)
         client = self.compute_client
-        client.servers.add_security_group(server['id'], gw_sg['name'])
+        server_id = server['id']
+        client.servers.add_security_group(server_id, gw_sg['name'])
 
     def connect_to_access_point(self, access_point):
         """
