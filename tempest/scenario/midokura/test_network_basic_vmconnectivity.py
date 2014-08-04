@@ -30,6 +30,7 @@ from tempest.openstack.common import log as logging
 from tempest.scenario.midokura.midotools import scenario
 from tempest.test import services
 from tempest import test
+from time import sleep
 from pprint import pprint
 
 CONF = config.CONF
@@ -127,5 +128,6 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
 
     @services('compute', 'network')
     def test_network_basic_vmconnectivity(self):
+        sleep(3000)
         self.assertTrue(self._check_ip())
 
