@@ -23,7 +23,7 @@ import warnings
 
 from tempest import exceptions
 from tempest.openstack.common import log as logging
-
+from pprint import pprint
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -87,6 +87,13 @@ class Client(object):
                     ssh_gw.set_missing_host_key_policy(
                     paramiko.AutoAddPolicy())
 
+                    pprint(self.gateway)
+                    pprint(self.gw_username)
+                    pprint(self.gw_password)
+                    pprint(self.look_for_keys)
+                    pprint(self.gw_key_filename)
+                    pprint(self.channel_timeout)
+                    pprint(self.gw_pkey)
 
                     ssh_gw.connect(self.gateway, username=self.gw_username,
                                 password=self.gw_password,
