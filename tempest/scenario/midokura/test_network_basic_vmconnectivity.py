@@ -89,14 +89,14 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
                 #pprint(an_ip)
                 self._check_connectivity(access_point=access_point_ssh,
                                          ip=an_ip)
-                self._seriouse_test(an_ip)
+                self._serious_test(an_ip)
                 return True
             else:
                 LOG.info("FAIL - No ip connectivity to the server ip: %s" % server.networks[name][0])
             raise Exception("FAIL - No ip for this network : %s"
                             % server.networks)
 
-    def _seriouse_test(self, remote_ip):
+    def _serious_test(self, remote_ip):
         #access_point_ssh = self.connect_to_access_point(self.access_point)
         LOG.info("Trying to get the list of ips")
         try:

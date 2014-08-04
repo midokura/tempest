@@ -36,7 +36,9 @@ LOG = logging.getLogger(__name__)
 class Client(object):
 
     def __init__(self, host, username, password=None, timeout=300, pkey=None,
-                 channel_timeout=10, look_for_keys=False, key_filename=None):
+                 channel_timeout=10, look_for_keys=False, key_filename=None,
+                 use_gw=False, gateway=None, gw_port=None, gw_password=None,
+                 gw_username=None, gw_key_filename=None, gw_pkey=None):
         self.host = host
         self.username = username
         self.password = password
@@ -49,6 +51,13 @@ class Client(object):
         self.timeout = int(timeout)
         self.channel_timeout = float(channel_timeout)
         self.buf_size = 1024
+        self.use_gw = use_gw
+        self.gateway = gateway
+        self.gw_port = gw_port
+        self.gw_password = gw_password
+        self.gw_username = gw_username
+        self.gw_key_filename = gw_key_filename
+        self.gw_pkey = gw_pkey
 
     def _get_ssh_connection(self, sleep=1.5, backoff=1):
         """Returns an ssh connection to the specified host."""
@@ -56,6 +65,10 @@ class Client(object):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(
             paramiko.AutoAddPolicy())
+
+        ssh_gw = None
+
+
         _start_time = time.time()
         if self.pkey is not None:
             LOG.info("Creating ssh connection to '%s' as '%s'"
@@ -68,11 +81,35 @@ class Client(object):
         attempts = 0
         while True:
             try:
-                ssh.connect(self.host, username=self.username,
+                if self.use_gw:
+                    ssh_gw = paramiko.SSHClient()
+                    ssh_gw.set_missing_host_key_policy(
+                    paramiko.AutoAddPolicy())
+
+                    ssh_gw.connect(self.gateway, username=self.gw_username,
+                                password=self.gw_password,
+                                look_for_keys=self.look_for_keys,
+                                key_filename=self.gw_key_filename,
+                                timeout=self.channel_timeout, pkey=self.gw_pkey)
+
+                    transport = ssh_gw.get_transport()
+                    dest_addr = (self.host, 22)
+                    local_addr = ('127.0.0.1', 4000)
+                    channel = transport.open_channel("direct-tcpip", dest_addr, local_addr)
+
+                    ssh.connect(hostname='localhost', username=self.username,
+                                password=self.password, port=4000,
+                                look_for_keys=self.look_for_keys,
+                                key_filename=self.key_filename,
+                                timeout=self.channel_timeout,
+                                pkey=self.pkey, sock=channel)
+                else:
+                    ssh.connect(self.host, username=self.username,
                             password=self.password,
                             look_for_keys=self.look_for_keys,
                             key_filename=self.key_filename,
                             timeout=self.channel_timeout, pkey=self.pkey)
+
                 LOG.info("ssh connection to %s@%s successfuly created",
                          self.username, self.host)
                 return ssh

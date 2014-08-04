@@ -257,7 +257,7 @@ class TestScenario(manager.NetworkScenarioTest):
         self.gw_subnet = subnet
         self.gw_router = router
         self.access_point = {}
-        self._fix_access_point(tenant, network)
+        self._set_access_point(tenant, network)
 
     def _set_access_point(self, tenant, network):
         """
@@ -271,6 +271,7 @@ class TestScenario(manager.NetworkScenarioTest):
         serv_dict = self._create_server(name, network, isgateway=True)
         self.access_point[serv_dict['server']] = serv_dict['keypair']
         self._assign_access_point_floating_ip(serv_dict['server'])
+        self._fix_access_point(self.access_point)
 
     def _assign_access_point_floating_ip(self, server):
         public_network_id = CONF.network.public_network_id
