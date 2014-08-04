@@ -134,7 +134,6 @@ class TestScenario(manager.NetworkScenarioTest):
         self.keypairs[tenant_id] = self.create_keypair(
             name=rand_name('keypair-smoke-'))
 
-
     def _create_custom_networks(self, mynetwork):
         network = self._create_network(mynetwork['tenant_id'])
         router = None
@@ -294,7 +293,8 @@ class TestScenario(manager.NetworkScenarioTest):
             direction='egress',
         )
         self._create_security_group_rule(secgroup=gw_sg, **ssh_rule)
-        self.compute_client.add_security_group(server['id'], gw_sg['name'])
+        client = self.network_client
+        client.add_security_group(server['id'], gw_sg['name'])
 
     def connect_to_access_point(self, access_point):
         """
