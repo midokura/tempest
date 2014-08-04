@@ -327,8 +327,8 @@ class TestScenario(manager.NetworkScenarioTest):
                 'look_for_keys': False,
                 'pkey': None,
                 }
-            ssh_client =self._ssh_client_server_by_gateway( gateway=fip,
-                server=remote_ip, username='cirros', password='cubswin:)',
+            ssh_client =self._ssh_client_server_by_gateway(gateway=fip,
+                host=remote_ip, username='cirros', password='cubswin:)',
                 gw_username='cirros', gw_password='cubswin:)', gw_pk=gw_pkey
             )
 
