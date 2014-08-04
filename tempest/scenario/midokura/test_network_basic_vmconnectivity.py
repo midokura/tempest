@@ -96,7 +96,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         #access_point_ssh = self.connect_to_access_point(self.access_point)
         LOG.info("Trying to get the list of ips")
         try:
-            ssh_client = self.setup_tunnel(remote_ip,pk)
+            ssh_client = self.setup_tunnel(remote_ip, pk)
             result = ssh_client.get_ip_list()
             pprint(result)
         except Exception as inst:

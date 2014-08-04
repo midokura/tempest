@@ -87,11 +87,15 @@ class Client(object):
                     ssh_gw.set_missing_host_key_policy(
                     paramiko.AutoAddPolicy())
 
+
                     ssh_gw.connect(self.gateway, username=self.gw_username,
                                 password=self.gw_password,
                                 look_for_keys=self.look_for_keys,
                                 key_filename=self.gw_key_filename,
                                 timeout=self.channel_timeout, pkey=self.gw_pkey)
+
+                    LOG.info("ssh connection to %s@%s successfuly created",
+                         self.gw_username, self.gateway)
 
                     transport = ssh_gw.get_transport()
                     dest_addr = (self.host, 22)
