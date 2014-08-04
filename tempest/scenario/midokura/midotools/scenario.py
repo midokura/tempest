@@ -293,7 +293,7 @@ class TestScenario(manager.NetworkScenarioTest):
             direction='egress',
         )
         self._create_security_group_rule(secgroup=gw_sg, **ssh_rule)
-        client = self.network_client
+        client = self.compute_client
         client.add_security_group(server['id'], gw_sg['name'])
 
     def connect_to_access_point(self, access_point):
@@ -308,7 +308,8 @@ class TestScenario(manager.NetworkScenarioTest):
         access_point_ssh = self._ssh_to_server(access_point_ssh,
                                                private_key=private_key)
         #fix for cirros image in order to enable a second eth
-        access_point_ssh.exec_command("sudo /sbin/udhcpc -i eth1")
+        result = access_point_ssh.exec_command("sudo /sbin/udhcpc -i eth1")
+        LOG.info(result)
         return access_point_ssh
 
     def setup_tunnel(self, remote_ip):
