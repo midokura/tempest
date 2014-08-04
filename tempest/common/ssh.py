@@ -57,6 +57,9 @@ class Client(object):
         self.gw_password = gw_password
         self.gw_username = gw_username
         self.gw_key_filename = gw_key_filename
+        if isinstance(gw_pkey, six.string_types):
+            gw_pkey = paramiko.RSAKey.from_private_key(
+                cStringIO.StringIO(str(pkey)))
         self.gw_pkey = gw_pkey
 
     def _get_ssh_connection(self, sleep=1.5, backoff=1):
