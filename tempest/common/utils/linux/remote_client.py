@@ -41,10 +41,9 @@ class RemoteClient():
             else:
                 raise exceptions.ServerUnreachable()
 
-        self.ssh_client = ssh.Client(ip_address, username, password, use_gw=use_gw,
+        self.ssh_client = ssh.Client(ip_address, username, password, use_gw=use_gw, gateway=gateway,
                                      timeout=ssh_timeout, pkey=pkey, gw_password=gw_password,
-                                     gw_pkey=gw_pk, gw_username=gw_username,
-                                     channel_timeout=ssh_channel_timeout)
+                                     gw_pkey=gw_pk, gw_username=gw_username, channel_timeout=ssh_channel_timeout)
 
     def exec_command(self, cmd):
         return self.ssh_client.exec_command(cmd)
