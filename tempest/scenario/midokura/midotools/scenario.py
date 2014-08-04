@@ -11,8 +11,10 @@ from tempest import config
 from neutronclient.common import exceptions as exc
 from pprint import pprint
 from tempest import test
+from tempest import exceptions
+from tempest.common.utils.linux import remote_client
 from tempest.scenario.midokura.midotools.admintools import TenantAdmin
-from tempest.scenario.midokura.midotools.forward import Forward
+
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -115,7 +117,7 @@ class TestScenario(manager.NetworkScenarioTest):
         else:
             server_ip = None
             if isgateway:
-                network_name = self.gwnetwork['name']
+                network_name = self.gw_network['name']
                 server = self.access_point.keys()[0]
             else:
                 network_name = self.tenants[server.tenant_id].network.name
@@ -251,11 +253,11 @@ class TestScenario(manager.NetworkScenarioTest):
     """
     def _build_gateway(self, tenant):
         network, subnet, router = self._create_networks(tenant['id'])
-        self.gwnetwork = network
-        self.gwsubnet = subnet
-        self.gwrouter = router
+        self.gw_network = network
+        self.gw_subnet = subnet
+        self.gw_router = router
         self.access_point = {}
-        self._set_access_point(tenant, network)
+        self._fix_access_point(tenant, network)
 
     def _set_access_point(self, tenant, network):
         """
@@ -269,7 +271,6 @@ class TestScenario(manager.NetworkScenarioTest):
         serv_dict = self._create_server(name, network, isgateway=True)
         self.access_point[serv_dict['server']] = serv_dict['keypair']
         self._assign_access_point_floating_ip(serv_dict['server'])
-        #self._set_gw_security_group(serv_dict['server'])
 
     def _assign_access_point_floating_ip(self, server):
         public_network_id = CONF.network.public_network_id
@@ -279,44 +280,44 @@ class TestScenario(manager.NetworkScenarioTest):
         self.floating_ips.setdefault(server, floating_ip)
         self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
 
-    def _set_gw_security_group(self, server):
-        gw_sg = self._create_empty_security_group(
-            namestart='sec_gateway-',
-            #dirty hack for obtaining tenant_id, in case of 2+ tenants needs refactor
-            tenant_id=self.tenants.keys()[0]
-        )
-        #self._create_loginable_secgroup_rule_neutron(secgroup=gw_sg)
-        ssh_rule = dict(
-            protocol='tcp',
-            port_range_min=4000,
-            port_range_max=4000,
-            direction='egress',
-        )
-        self._create_security_group_rule(secgroup=gw_sg, **ssh_rule)
-        client = self.compute_client
-        client.servers.add_security_group(server.id, gw_sg['name'])
-
-    def connect_to_access_point(self, access_point):
+    def _fix_access_point(self, access_point):
         """
         create ssh connection to tenant access point
         """
         server, keypair = access_point.items()[0]
-        access_point_ssh = \
+        access_point_ip = \
             self.floating_ips[server].floating_ip_address
         private_key = keypair.private_key
+
         #should implement a wait for status "ACTIVE" function
-        access_point_ssh = self._ssh_to_server(access_point_ssh,
+        access_point_ssh = self._ssh_to_server(access_point_ip,
                                                private_key=private_key)
         #fix for cirros image in order to enable a second eth
         result = access_point_ssh.exec_command("sudo /sbin/udhcpc -i eth1")
         LOG.info(result)
-        return access_point_ssh
+        #return access_point_ssh
+
+    def _ssh_client_server_by_gateway(self, gateway, host, gw_pk=None, gw_username=None,
+                                  gw_password=None, pk=None, username=None,
+                                  password=None):
+        tunnel_client = remote_client.RemoteClient(server=host, username=username,
+                                                   password=password, pkey=pk,
+                                                   gw_username=gw_username, gateway=gateway,
+                                                   gw_password=gw_password, gw_pk=gw_pk)
+        try:
+            tunnel_client.validate_authentication()
+        except exceptions.SSHTimeout:
+            LOG.exception('ssh connection to %s failed' % host)
+            #debug.log_net_debug()
+            raise
+        return tunnel_client
 
     def setup_tunnel(self, remote_ip):
         if self.access_point:
             server, keypair = self.access_point.items()[0]
-            pkey = keypair.private_key
+            gw_pkey = keypair.private_key
             fip = self.get_server_ip(server, floating=True)
+
             #pprint(pkey)
             options = {
                 'user': 'cirros',
@@ -325,7 +326,10 @@ class TestScenario(manager.NetworkScenarioTest):
                 'look_for_keys': False,
                 'pkey': None,
                 }
-            self.Forwarding = Forward()
-            self.Forwarding.build_tunnel(options, fip, remote_ip)
+            ssh_client =self._ssh_client_server_by_gateway( gateway=fip,
+                server=remote_ip, username='cirros', password='cubswin:)',
+                gw_username='cirros', gw_password='cubswin:)', gw_pk=gw_pkey
+            )
 
+            return ssh_client
 
