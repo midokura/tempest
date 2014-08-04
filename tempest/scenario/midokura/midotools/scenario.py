@@ -302,7 +302,7 @@ class TestScenario(manager.NetworkScenarioTest):
                                   gw_password=None, pk=None, username=None,
                                   password=None):
         tunnel_client = remote_client.RemoteClient(server=host, username=username,
-                                                   password=password, pkey=pk,use_gw=True,
+                                                   password=password, pkey=pk, use_gw=True,
                                                    gw_username=gw_username, gateway=gateway,
                                                    gw_password=gw_password, gw_pk=gw_pk)
         try:

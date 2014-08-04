@@ -87,6 +87,7 @@ class Client(object):
                     ssh_gw.set_missing_host_key_policy(
                     paramiko.AutoAddPolicy())
 
+
                     pprint(self.gateway)
                     pprint(self.gw_username)
                     pprint(self.gw_password)
@@ -94,6 +95,7 @@ class Client(object):
                     pprint(self.gw_key_filename)
                     pprint(self.channel_timeout)
                     pprint(self.gw_pkey)
+
 
                     ssh_gw.connect(self.gateway, username=self.gw_username,
                                 password=self.gw_password,
