@@ -44,7 +44,7 @@ class RemoteClient():
         if gateway is not None:
             use_gw = True
         self.ssh_client = ssh.Client(ip_address, username, password, use_gw=use_gw,
-                                     ssh_timeout, pkey=pkey, gw_password=gw_password,
+                                     ssh_channel_timeout=ssh_timeout, pkey=pkey, gw_password=gw_password,
                                      gw_pkey=gw_pk, gw_username=gw_username,
                                      channel_timeout=ssh_channel_timeout)
 
