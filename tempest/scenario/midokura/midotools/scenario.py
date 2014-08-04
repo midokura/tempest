@@ -134,8 +134,6 @@ class TestScenario(manager.NetworkScenarioTest):
         self.keypairs[tenant_id] = self.create_keypair(
             name=rand_name('keypair-smoke-'))
 
-    def _create_custom_security_groups(self, tenant_id):
-        self.security_groups[tenant_id] = self._create_security_group()
 
     def _create_custom_networks(self, mynetwork):
         network = self._create_network(mynetwork['tenant_id'])
@@ -284,18 +282,19 @@ class TestScenario(manager.NetworkScenarioTest):
 
     def _set_gw_security_group(self, server):
         gw_sg = self._create_empty_security_group(
-            namestart='secgroup_access-',
+            namestart='sec_gateway-',
             #dirty hack for obtaining tenant_id, in case of 2+ tenants needs refactor
             tenant_id=self.tenants.keys()[0]
         )
+        #self._create_loginable_secgroup_rule_neutron(secgroup=gw_sg)
         ssh_rule = dict(
             protocol='tcp',
             port_range_min=4000,
             port_range_max=4000,
             direction='egress',
         )
-        resp, sg = self._create_security_group_rule(secgroup=gw_sg, **ssh_rule)
-        self.compute_client.add_security_group(server['id'], sg['name'])
+        self._create_security_group_rule(secgroup=gw_sg, **ssh_rule)
+        self.compute_client.add_security_group(server['id'], gw_sg['name'])
 
     def connect_to_access_point(self, access_point):
         """
@@ -305,6 +304,7 @@ class TestScenario(manager.NetworkScenarioTest):
         access_point_ssh = \
             self.floating_ips[server].floating_ip_address
         private_key = keypair.private_key
+        #should implement a wait for status "ACTIVE" function
         access_point_ssh = self._ssh_to_server(access_point_ssh,
                                                private_key=private_key)
         #fix for cirros image in order to enable a second eth
