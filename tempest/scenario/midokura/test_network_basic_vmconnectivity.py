@@ -84,7 +84,6 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             name = server.networks.keys()[0]
             if any(i in networks.keys() for i in server.networks.keys()):
                 remote_ip = server.networks[name][0]
-                #pprint(server)
                 pk = self.servers[server].private_key
                 self._serious_test(remote_ip, pk)
                 return True

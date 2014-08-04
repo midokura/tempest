@@ -319,14 +319,8 @@ class TestScenario(manager.NetworkScenarioTest):
             gw_pkey = keypair.private_key
             fip = self.get_server_ip(server, floating=True)
 
-            #pprint(pkey)
-            options = {
-                'user': 'cirros',
-                'password': 'cubswin:)',
-                'keyfile': None,
-                'look_for_keys': False,
-                'pkey': None,
-                }
+            pprint(gw_pkey)
+            pprint(private_key)
             ssh_client =self._ssh_client_server_by_gateway(gateway=fip,
                 host=remote_ip, username='cirros', password='cubswin:)', pk=private_key,
                 gw_username='cirros', gw_password='cubswin:)', gw_pk=gw_pkey
