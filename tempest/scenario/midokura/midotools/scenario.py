@@ -313,7 +313,7 @@ class TestScenario(manager.NetworkScenarioTest):
             raise
         return tunnel_client
 
-    def setup_tunnel(self, remote_ip):
+    def setup_tunnel(self, remote_ip, private_key):
         if self.access_point:
             server, keypair = self.access_point.items()[0]
             gw_pkey = keypair.private_key
@@ -328,7 +328,7 @@ class TestScenario(manager.NetworkScenarioTest):
                 'pkey': None,
                 }
             ssh_client =self._ssh_client_server_by_gateway(gateway=fip,
-                host=remote_ip, username='cirros', password='cubswin:)',
+                host=remote_ip, username='cirros', password='cubswin:)', pk=private_key,
                 gw_username='cirros', gw_password='cubswin:)', gw_pk=gw_pkey
             )
 
