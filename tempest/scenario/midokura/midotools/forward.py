@@ -136,7 +136,7 @@ class Forward(object):
         self._verbose('Now forwarding remote port %d to %s:%d ...' % (self.DEFAULT_PORT, remote[0], remote[1]))
 
         try:
-            thr = threading.Thread(target=self._reverse_forward_tunnel, args= (self.DEFAULT_PORT, remote[0], remote[1], client.get_transport()))
+            thr = threading.Thread(target=self._reverse_forward_tunnel, args=(self.DEFAULT_PORT, remote[0], remote[1], client.get_transport()))
             thr.setDaemon(True)
             thr.start()
             #self._reverse_forward_tunnel(self.DEFAULT_PORT, remote[0], remote[1], client.get_transport())
@@ -144,7 +144,7 @@ class Forward(object):
             print('C-c: Port forwarding stopped.')
             sys.exit(0)
             raise
-        except Exception:
-            LOG.info(Exception.message)
+        except Exception as e:
+            LOG.info(e)
 
 

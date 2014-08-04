@@ -237,6 +237,18 @@ class TestScenario(manager.NetworkScenarioTest):
         floating_ip = self._create_floating_ip(server, public_network_id)
         self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
 
+    def _get_custom_server_port_id(self, server, ip_addr=None):
+        ports = self._list_ports(device_id=server.id)
+        #pprint(ports)
+        if ip_addr:
+            for port in ports:
+                if port['fixed_ips'][0]['ip_address'] == ip_addr:
+                    return port['id']
+            #ports = [p for p in ports['ports'] if p['fixed_ips'][0]['ip_address'] == ip_addr]
+        self.assertEqual(len(ports), 1,
+                         "Unable to determine which port to target.")
+        return ports[0]['id']
+
     """
     GateWay methods
     """
@@ -260,6 +272,7 @@ class TestScenario(manager.NetworkScenarioTest):
         serv_dict = self._create_server(name, network, isgateway=True)
         self.access_point[serv_dict['server']] = serv_dict['keypair']
         self._assign_access_point_floating_ip(serv_dict['server'])
+        self._set_gw_security_group(serv_dict['server'])
 
     def _assign_access_point_floating_ip(self, server):
         public_network_id = CONF.network.public_network_id
@@ -269,17 +282,20 @@ class TestScenario(manager.NetworkScenarioTest):
         self.floating_ips.setdefault(server, floating_ip)
         self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
 
-    def _get_custom_server_port_id(self, server, ip_addr=None):
-        ports = self._list_ports(device_id=server.id)
-        #pprint(ports)
-        if ip_addr:
-            for port in ports:
-                if port['fixed_ips'][0]['ip_address'] == ip_addr:
-                    return port['id']
-            #ports = [p for p in ports['ports'] if p['fixed_ips'][0]['ip_address'] == ip_addr]
-        self.assertEqual(len(ports), 1,
-                         "Unable to determine which port to target.")
-        return ports[0]['id']
+    def _set_gw_security_group(self, server):
+        gw_sg = self._create_empty_security_group(
+            namestart='secgroup_access-',
+            #dirty hack for obtaining tenant_id, in case of 2+ tenants needs refactor
+            tenant_id=self.tenants.keys()[0]
+        )
+        ssh_rule = dict(
+            protocol='tcp',
+            port_range_min=4000,
+            port_range_max=4000,
+            direction='egress',
+        )
+        resp, sg = self._create_security_group_rule(secgroup=gw_sg, **ssh_rule)
+        self.compute_client.add_security_group(server['id'], sg['name'])
 
     def connect_to_access_point(self, access_point):
         """
