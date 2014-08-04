@@ -76,9 +76,10 @@ class Forward(object):
             chan = transport.accept(1000)
             if chan is None:
                 continue
-            thr = threading.Thread(target=self._handler, args=(chan, remote_host, remote_port))
-            thr.setDaemon(True)
-            thr.start()
+            self._handler(chan, remote_host, remote_port)
+            #thr = threading.Thread(target=self._handler, args=(chan, remote_host, remote_port))
+            #thr.setDaemon(True)
+            #thr.start()
 
     def _verbose(self, s):
         if self.g_verbose:
@@ -135,9 +136,15 @@ class Forward(object):
         self._verbose('Now forwarding remote port %d to %s:%d ...' % (self.DEFAULT_PORT, remote[0], remote[1]))
 
         try:
-            self._reverse_forward_tunnel(self.DEFAULT_PORT, remote[0], remote[1], client.get_transport())
+            thr = threading.Thread(target=self._reverse_forward_tunnel, args= (self.DEFAULT_PORT, remote[0], remote[1], client.get_transport()))
+            thr.setDaemon(True)
+            thr.start()
+            #self._reverse_forward_tunnel(self.DEFAULT_PORT, remote[0], remote[1], client.get_transport())
         except KeyboardInterrupt:
             print('C-c: Port forwarding stopped.')
             sys.exit(0)
+            raise
+        except Exception:
+            LOG.info(Exception.message)
 
 

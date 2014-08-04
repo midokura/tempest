@@ -291,7 +291,7 @@ class TestScenario(manager.NetworkScenarioTest):
         private_key = keypair.private_key
         access_point_ssh = self._ssh_to_server(access_point_ssh,
                                                private_key=private_key)
-        #fix for cirros image
+        #fix for cirros image in order to enable a second eth
         access_point_ssh.exec_command("sudo /sbin/udhcpc -i eth1")
         return access_point_ssh
 
