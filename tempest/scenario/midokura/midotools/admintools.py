@@ -17,8 +17,8 @@ class TenantAdmin(object):
         description = rand_name('desc_')
         #resp, tenant = self.client.create_tenant(tenant_name, enabled=True)
         resp, tenant = self.client.create_tenant(
-            name= tenant_name,
-            description= description, enabled=True)
+            name=tenant_name,
+            description=description, enabled=True)
         self.tenants.append(tenant)
         return tenant
 
