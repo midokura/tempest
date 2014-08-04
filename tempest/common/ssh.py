@@ -82,6 +82,7 @@ class Client(object):
         while True:
             try:
                 if self.use_gw:
+                    LOG.info("enters into the gateway world")
                     ssh_gw = paramiko.SSHClient()
                     ssh_gw.set_missing_host_key_policy(
                     paramiko.AutoAddPolicy())

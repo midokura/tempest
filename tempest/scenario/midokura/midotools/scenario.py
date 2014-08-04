@@ -302,7 +302,7 @@ class TestScenario(manager.NetworkScenarioTest):
                                   gw_password=None, pk=None, username=None,
                                   password=None):
         tunnel_client = remote_client.RemoteClient(server=host, username=username,
-                                                   password=password, pkey=pk,
+                                                   password=password, pkey=pk,use_gw=True,
                                                    gw_username=gw_username, gateway=gateway,
                                                    gw_password=gw_password, gw_pk=gw_pk)
         try:
@@ -319,8 +319,6 @@ class TestScenario(manager.NetworkScenarioTest):
             gw_pkey = keypair.private_key
             fip = self.get_server_ip(server, floating=True)
 
-            pprint(gw_pkey)
-            pprint(private_key)
             ssh_client =self._ssh_client_server_by_gateway(gateway=fip,
                 host=remote_ip, username='cirros', password='cubswin:)', pk=private_key,
                 gw_username='cirros', gw_password='cubswin:)', gw_pk=gw_pkey
