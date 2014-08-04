@@ -305,12 +305,6 @@ class TestScenario(manager.NetworkScenarioTest):
                                                    password=password, pkey=pk, use_gw=True,
                                                    gw_username=gw_username, gateway=gateway,
                                                    gw_password=gw_password, gw_pk=gw_pk)
-        try:
-            tunnel_client.validate_authentication()
-        except exceptions.SSHTimeout:
-            LOG.exception('ssh connection to %s failed' % host)
-            #debug.log_net_debug()
-            raise
         return tunnel_client
 
     def setup_tunnel(self, remote_ip, private_key):

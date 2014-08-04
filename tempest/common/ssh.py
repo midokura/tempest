@@ -118,6 +118,15 @@ class Client(object):
                                 timeout=self.channel_timeout,
                                 pkey=self.pkey, sock=channel)
                 else:
+
+                    pprint(self.host)
+                    pprint(self.username)
+                    pprint(self.password)
+                    pprint(self.look_for_keys)
+                    pprint(self.key_filename)
+                    pprint(self.channel_timeout)
+                    pprint(self.pkey)
+
                     ssh.connect(self.host, username=self.username,
                             password=self.password,
                             look_for_keys=self.look_for_keys,
