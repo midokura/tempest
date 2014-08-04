@@ -316,8 +316,8 @@ class TestScenario(manager.NetworkScenarioTest):
         if self.access_point:
             server, keypair = self.access_point.items()[0]
             pkey = keypair.private_key
-            fip = self.get_server_ip(server,floating=True)
-            pprint(pkey)
+            fip = self.get_server_ip(server, floating=True)
+            #pprint(pkey)
             options = {
                 'user': 'cirros',
                 'password': 'cubswin:)',
