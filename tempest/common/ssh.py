@@ -61,6 +61,7 @@ class Client(object):
             gw_pkey = paramiko.RSAKey.from_private_key(
                 cStringIO.StringIO(str(gw_pkey)))
         self.gw_pkey = gw_pkey
+        self.gw_ssh = None
 
     def _get_ssh_connection(self, sleep=1.5, backoff=1):
         """Returns an ssh connection to the specified host."""
@@ -69,7 +70,7 @@ class Client(object):
         ssh.set_missing_host_key_policy(
             paramiko.AutoAddPolicy())
 
-        ssh_gw = None
+
 
 
         _start_time = time.time()
@@ -86,12 +87,12 @@ class Client(object):
             try:
                 if self.use_gw:
 
-                    ssh_gw = paramiko.SSHClient()
-                    ssh_gw.set_missing_host_key_policy(
+                    self.ssh_gw = paramiko.SSHClient()
+                    self.ssh_gw.set_missing_host_key_policy(
                     paramiko.AutoAddPolicy())
 
 
-                    ssh_gw.connect(self.gateway, username=self.gw_username,
+                    self.ssh_gw.connect(self.gateway, username=self.gw_username,
                                 password=self.gw_password,
                                 look_for_keys=self.look_for_keys,
                                 key_filename=self.gw_key_filename,
@@ -100,7 +101,7 @@ class Client(object):
                     LOG.info("ssh connection to %s@%s successfuly created",
                          self.gw_username, self.gateway)
 
-                    transport = ssh_gw.get_transport()
+                    transport = self.ssh_gw.get_transport()
                     dest_addr = (self.host, 22)
                     local_addr = ('127.0.0.1', 4000)
                     channel = transport.open_channel("direct-tcpip", dest_addr, local_addr)
