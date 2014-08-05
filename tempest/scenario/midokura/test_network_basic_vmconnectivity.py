@@ -30,7 +30,7 @@ from tempest.openstack.common import log as logging
 from tempest.scenario.midokura.midotools import scenario
 from tempest.test import services
 from tempest import test
-from time import sleep
+import re
 from pprint import pprint
 
 CONF = config.CONF
@@ -96,7 +96,8 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         LOG.info("Trying to get the list of ips")
         try:
             ssh_client = self.setup_tunnel(remote_ip, pk)
-            result = ssh_client.get_ip_list()
+            net_info = ssh_client.get_ip_list()
+            result = re.match('inet (addr:)?([0-9]*\.){3}[0-9]*', net_info)
             LOG.info(result)
         except Exception as inst:
             LOG.info(inst.args)
