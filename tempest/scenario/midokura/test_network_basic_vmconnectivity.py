@@ -121,7 +121,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
                 self._serious_test(remote_ip, pk)
             else:
                 LOG.info("FAIL - No ip connectivity to the server ip: %s" % server.networks[name][0])
-            raise Exception("FAIL - No ip for this network : %s"
+                raise Exception("FAIL - No ip for this network : %s"
                             % server.networks)
 
 
