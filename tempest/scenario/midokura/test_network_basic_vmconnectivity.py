@@ -95,8 +95,8 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             raise
 
     def _check_default_gateway(self, route_out, internal_ip):
-        rtable = self._build_route_dict(route_out)
         try:
+            rtable = self._build_route_dict(route_out)
             self.assertIn("default", rtable["destination"])
         except Exception as inst:
             raise inst
