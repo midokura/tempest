@@ -84,7 +84,8 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             LOG.info(net_info)
             pattern = re.compile('[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
             list = pattern.findall(net_info)
-            return self.assertIn(remote_ip, list)
+            LOG.info(list)
+            self.assertIn(remote_ip, list)
         except Exception as inst:
             LOG.info(inst.args)
             LOG.info
