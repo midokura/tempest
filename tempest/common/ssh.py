@@ -70,9 +70,6 @@ class Client(object):
         ssh.set_missing_host_key_policy(
             paramiko.AutoAddPolicy())
 
-
-
-
         _start_time = time.time()
         if self.pkey is not None:
             LOG.info("Creating ssh connection to '%s' as '%s'"
@@ -113,7 +110,6 @@ class Client(object):
                                 key_filename=self.key_filename,
                                 timeout=self.channel_timeout,
                                 pkey=self.pkey, sock=channel)
-                    #time.sleep(3000)
                 else:
 
                     ssh.connect(self.host, username=self.username,
