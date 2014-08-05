@@ -117,7 +117,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         #Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
         for line in lines[1:]:
             cols = line.split(None)
-            for i in range(0(len(cols)-1)):
+            for i in range(len(cols)):
                 route_table.values()[0].append(cols[0])
         pprint(route_table.__dict__)
         return route_table
