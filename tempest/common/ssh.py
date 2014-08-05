@@ -23,7 +23,7 @@ import warnings
 
 from tempest import exceptions
 from tempest.openstack.common import log as logging
-from pprint import pprint
+
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -91,15 +91,6 @@ class Client(object):
                     paramiko.AutoAddPolicy())
 
 
-                    pprint(self.gateway)
-                    pprint(self.gw_username)
-                    pprint(self.gw_password)
-                    pprint(self.look_for_keys)
-                    pprint(self.gw_key_filename)
-                    pprint(self.channel_timeout)
-                    pprint(self.gw_pkey)
-
-
                     ssh_gw.connect(self.gateway, username=self.gw_username,
                                 password=self.gw_password,
                                 look_for_keys=self.look_for_keys,
@@ -121,14 +112,6 @@ class Client(object):
                                 timeout=self.channel_timeout,
                                 pkey=self.pkey, sock=channel)
                 else:
-
-                    pprint(self.host)
-                    pprint(self.username)
-                    pprint(self.password)
-                    pprint(self.look_for_keys)
-                    pprint(self.key_filename)
-                    pprint(self.channel_timeout)
-                    pprint(self.pkey)
 
                     ssh.connect(self.host, username=self.username,
                             password=self.password,
