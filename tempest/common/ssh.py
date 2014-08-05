@@ -36,7 +36,7 @@ LOG = logging.getLogger(__name__)
 class Client(object):
 
     def __init__(self, host, username, password=None, timeout=300, pkey=None,
-                 channel_timeout=200, look_for_keys=False, key_filename=None,
+                 channel_timeout=10, look_for_keys=False, key_filename=None,
                  use_gw=False, gateway=None, gw_port=None, gw_password=None,
                  gw_username=None, gw_key_filename=None, gw_pkey=None):
         self.host = host
@@ -85,7 +85,7 @@ class Client(object):
         while True:
             try:
                 if self.use_gw:
-                    LOG.info("enters into the gateway world")
+
                     ssh_gw = paramiko.SSHClient()
                     ssh_gw.set_missing_host_key_policy(
                     paramiko.AutoAddPolicy())
@@ -105,6 +105,7 @@ class Client(object):
                     local_addr = ('127.0.0.1', 4000)
                     channel = transport.open_channel("direct-tcpip", dest_addr, local_addr)
 
+                    LOG.info('Connecting through the tunnel')
                     ssh.connect(hostname='localhost', username=self.username,
                                 password=self.password, port=4000,
                                 look_for_keys=self.look_for_keys,

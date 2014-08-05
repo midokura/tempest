@@ -76,7 +76,6 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         }
 
     def _check_ip(self):
-
         ap_details = self.access_point.keys()[0]
         networks = ap_details.networks
         for server in self.servers:
@@ -98,7 +97,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         try:
             ssh_client = self.setup_tunnel(remote_ip, pk)
             result = ssh_client.get_ip_list()
-            pprint(result)
+            LOG.debug(result)
         except Exception as inst:
             LOG.info(inst.args)
             LOG.info
