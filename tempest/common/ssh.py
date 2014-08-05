@@ -122,7 +122,7 @@ class Client(object):
 
                 LOG.info("ssh connection to %s@%s successfuly created",
                          self.username, self.host)
-                sleep(3000)
+                time.sleep(3000)
                 return ssh
             except (socket.error,
                     paramiko.SSHException) as e:
