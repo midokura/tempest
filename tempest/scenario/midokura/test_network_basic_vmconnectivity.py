@@ -118,15 +118,16 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         pprint(route_out)
         for line in lines[2:]:
             cols = line.split(None)
-            pprint(cols)
-            route_table['destination'].append(cols[0])
-            route_table['gateway'].append(cols[1])
-            route_table['genmask'].append(cols[2])
-            route_table['flags'].append(cols[3])
-            route_table['metric'].append(cols[4])
-            route_table['ref'].append(cols[5])
-            route_table['use'].append(cols[6])
-            route_table['Iface'].append(cols[7])
+            if cols:
+                pprint(cols)
+                route_table['destination'].append(cols[0])
+                route_table['gateway'].append(cols[1])
+                route_table['genmask'].append(cols[2])
+                route_table['flags'].append(cols[3])
+                route_table['metric'].append(cols[4])
+                route_table['ref'].append(cols[5])
+                route_table['use'].append(cols[6])
+                route_table['Iface'].append(cols[7])
 
         pprint(route_table)
         return route_table
