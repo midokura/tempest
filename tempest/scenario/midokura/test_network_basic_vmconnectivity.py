@@ -75,22 +75,6 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             'tenants': [tenantA],
         }
 
-    def _check_ip(self):
-        ap_details = self.access_point.keys()[0]
-        networks = ap_details.networks
-        for server in self.servers:
-            #servers should only have 1 network
-            name = server.networks.keys()[0]
-            if any(i in networks.keys() for i in server.networks.keys()):
-                remote_ip = server.networks[name][0]
-                pk = self.servers[server].private_key
-                self._serious_test(remote_ip, pk)
-                return True
-            else:
-                LOG.info("FAIL - No ip connectivity to the server ip: %s" % server.networks[name][0])
-            raise Exception("FAIL - No ip for this network : %s"
-                            % server.networks)
-
     def _serious_test(self, remote_ip, pk):
         #access_point_ssh = self.connect_to_access_point(self.access_point)
         LOG.info("Trying to get the list of ips")
@@ -99,6 +83,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             net_info = ssh_client.get_ip_list()
             result = re.match('inet (addr:)?([0-9]*\.){3}[0-9]*', net_info)
             LOG.info(result)
+            return self.assertEqual(remote_ip, result)
         except Exception as inst:
             LOG.info(inst.args)
             LOG.info
@@ -123,5 +108,17 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
 
     @services('compute', 'network')
     def test_network_basic_vmconnectivity(self):
-        self.assertTrue(self._check_ip())
+        ap_details = self.access_point.keys()[0]
+        networks = ap_details.networks
+        for server in self.servers:
+            #servers should only have 1 network
+            name = server.networks.keys()[0]
+            if any(i in networks.keys() for i in server.networks.keys()):
+                remote_ip = server.networks[name][0]
+                pk = self.servers[server].private_key
+                self._serious_test(remote_ip, pk)
+            else:
+                LOG.info("FAIL - No ip connectivity to the server ip: %s" % server.networks[name][0])
+            raise Exception("FAIL - No ip for this network : %s"
+                            % server.networks)
 
