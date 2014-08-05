@@ -97,7 +97,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         try:
             ssh_client = self.setup_tunnel(remote_ip, pk)
             result = ssh_client.get_ip_list()
-            LOG.debug(result)
+            LOG.info(result)
         except Exception as inst:
             LOG.info(inst.args)
             LOG.info

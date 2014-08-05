@@ -283,7 +283,7 @@ class TestScenario(manager.NetworkScenarioTest):
 
     def _fix_access_point(self, access_point):
         """
-        create ssh connection to tenant access point
+        Hotfix for cirros images
         """
         server, keypair = access_point.items()[0]
         access_point_ip = \
@@ -295,7 +295,7 @@ class TestScenario(manager.NetworkScenarioTest):
                                                private_key=private_key)
         #fix for cirros image in order to enable a second eth
         result = access_point_ssh.exec_command("sudo /sbin/udhcpc -i eth1")
-        LOG.info(result)
+        LOG.debug(result)
         #return access_point_ssh
 
     def _ssh_client_server_by_gateway(self, gateway, host, gw_pk=None, gw_username=None,
