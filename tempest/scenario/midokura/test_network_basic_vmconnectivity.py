@@ -119,7 +119,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             cols = line.split(None)
             for i in range(len(cols)):
                 route_table.values()[0].append(cols[0])
-        pprint(route_table.__dict__)
+        pprint(route_table)
         return route_table
 
 
