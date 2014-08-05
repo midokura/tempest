@@ -95,7 +95,33 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             raise
 
     def _check_default_gateway(self, route_out, internal_ip):
-        return True
+        rtable = self._build_route_dict(route_out)
+        try:
+            self.assertIn("default", rtable["destination"])
+        except Exception as inst:
+            raise inst
+
+    def _build_route_dict(self, route_out):
+        route_table = {
+            "destination": [],
+            "gateway": [],
+            "genmask": [],
+            "flags": [],
+            "metric": [],
+            "ref": [],
+            "use": [],
+            "Iface": []
+        }
+        lines = route_out.split("\n")
+        #we ignore the first line since it should contain the table col names only
+        #Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+        for line in lines[1:]:
+            cols = line.split(None)
+            for i in range(0(len(cols)-1)):
+                route_table.values()[0].append(cols[0])
+        pprint(route_table.__dict__)
+        return route_table
+
 
     @services('compute', 'network')
     def test_network_basic_vmconnectivity(self):
@@ -114,3 +140,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
                             % server.networks)
 
 
+
+
+test = "default         10.10.1.1       0.0.0.0         UG    0      0        0 eth0 \
+        10.10.1.0       *               255.255.255.0   U     0      0        0 eth0"
