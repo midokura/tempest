@@ -112,6 +112,7 @@ class Client(object):
                                 key_filename=self.key_filename,
                                 timeout=self.channel_timeout,
                                 pkey=self.pkey, sock=channel)
+                    #time.sleep(3000)
                 else:
 
                     ssh.connect(self.host, username=self.username,
@@ -122,7 +123,7 @@ class Client(object):
 
                 LOG.info("ssh connection to %s@%s successfuly created",
                          self.username, self.host)
-                time.sleep(3000)
+
                 return ssh
             except (socket.error,
                     paramiko.SSHException) as e:
