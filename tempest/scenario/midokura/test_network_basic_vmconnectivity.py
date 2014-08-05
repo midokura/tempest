@@ -86,29 +86,16 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             list = pattern.findall(net_info)
             LOG.debug(list)
             self.assertIn(remote_ip, list)
-            route = ssh_client.exec_command("sudo /sbin/route ")
-            log.info(route)
+            route_out = ssh_client.exec_command("sudo /sbin/route ")
+            self._check_default_gateway(route_out, remote_ip)
+            LOG.info(route_out)
         except Exception as inst:
             LOG.info(inst.args)
             LOG.info
-            #debug.log_ip_ns()
             raise
 
-    def _check_connectivity(self, access_point, ip, should_succeed=True):
-        LOG.info("checking connectivity to ip: %s " % ip)
-        if should_succeed:
-            msg = "Timed out waiting for %s to become reachable" % ip
-        else:
-            msg = "%s is reachable" % ip
-        try:
-            self.assertTrue(self._check_remote_connectivity(access_point, ip,
-                                                            should_succeed),
-                            msg)
-        except test.exceptions.SSHTimeout:
-            raise
-        except Exception:
-            debug.log_net_debug()
-            raise
+    def _check_default_gateway(self, route_out, internal_ip):
+        return True
 
     @services('compute', 'network')
     def test_network_basic_vmconnectivity(self):
