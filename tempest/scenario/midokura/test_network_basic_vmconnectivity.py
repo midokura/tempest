@@ -115,6 +115,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         lines = route_out.split("\n")
         #we ignore the first line since it should contain the table col names only
         #Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+        pprint(route_out)
         for line in lines[1:]:
             cols = line.split(None)
             for i in range(len(cols)):
