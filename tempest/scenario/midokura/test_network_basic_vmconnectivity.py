@@ -81,11 +81,13 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         try:
             ssh_client = self.setup_tunnel(remote_ip, pk)
             net_info = ssh_client.get_ip_list()
-            LOG.info(net_info)
+            LOG.debug(net_info)
             pattern = re.compile('[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
             list = pattern.findall(net_info)
-            LOG.info(list)
+            LOG.debug(list)
             self.assertIn(remote_ip, list)
+            route = ssh_client.exec_command("sudo /sbin/route ")
+            log.info(route)
         except Exception as inst:
             LOG.info(inst.args)
             LOG.info
@@ -125,13 +127,3 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
                             % server.networks)
 
 
-test = "o: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue \
- out:     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00 \
-     inet 127.0.0.1/8 scope host lo \
-     inet6 ::1/128 scope host \
-       valid_lft forever preferred_lft forever \
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast qlen 1000 \
-    link/ether fa:16:3e:95:68:0e brd ff:ff:ff:ff:ff:ff \
-    inet 10.10.1.2/24 brd 10.10.1.255 scope global eth0 \
-   inet6 fe80::f816:3eff:fe95:680e/64 scope link \
-     valid_lft forever preferred_lft forever"
