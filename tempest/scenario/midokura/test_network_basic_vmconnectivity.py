@@ -29,7 +29,7 @@ from tempest import config
 from tempest.openstack.common import log as logging
 from tempest.scenario.midokura.midotools import scenario
 from tempest.test import services
-from tempest import test
+from tempest.scenario.midokura.midotools import helper
 import re
 from pprint import pprint
 
@@ -86,7 +86,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             list = pattern.findall(net_info)
             LOG.debug(list)
             self.assertIn(remote_ip, list)
-            route_out = ssh_client.exec_command("sudo /sbin/route ")
+            route_out = ssh_client.exec_command("sudo /sbin/route -n")
             self._check_default_gateway(route_out, remote_ip)
             LOG.info(route_out)
         except Exception as inst:
@@ -96,42 +96,11 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
 
     def _check_default_gateway(self, route_out, internal_ip):
         try:
-            rtable = self._build_route_dict(route_out)
-            self.assertIn("default", rtable["destination"])
+            rtable = helper.Routetable.build_route_table(route_out)
+            ##TODO: More extended route table tests
+            self.assertIn("default" or "0.0.0.0", rtable["destination"])
         except Exception as inst:
             raise inst
-
-    def _build_route_dict(self, route_out):
-        route_table = {
-            "destination": [],
-            "gateway": [],
-            "genmask": [],
-            "flags": [],
-            "metric": [],
-            "ref": [],
-            "use": [],
-            "Iface": []
-        }
-        lines = route_out.split("\n")
-        #we ignore the first line since it should contain the table col names only
-        #Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-        pprint(route_out)
-        for line in lines[2:]:
-            cols = line.split(None)
-            if cols:
-                pprint(cols)
-                route_table['destination'].append(cols[0])
-                route_table['gateway'].append(cols[1])
-                route_table['genmask'].append(cols[2])
-                route_table['flags'].append(cols[3])
-                route_table['metric'].append(cols[4])
-                route_table['ref'].append(cols[5])
-                route_table['use'].append(cols[6])
-                route_table['Iface'].append(cols[7])
-
-        pprint(route_table)
-        return route_table
-
 
     @services('compute', 'network')
     def test_network_basic_vmconnectivity(self):
