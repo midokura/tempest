@@ -98,7 +98,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
         try:
             rtable = helper.Routetable.build_route_table(route_out)
             ##TODO: More extended route table tests
-            LOG.info(rtable)
+            LOG.debug(rtable)
             self.assertTrue(True in [r.is_default_route() for r in rtable])
         except Exception as inst:
             LOG.info(inst.args)
