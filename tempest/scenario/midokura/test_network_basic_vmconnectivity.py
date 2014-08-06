@@ -99,9 +99,10 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             rtable = helper.Routetable.build_route_table(route_out)
             ##TODO: More extended route table tests
             LOG.info(rtable)
-            self.assertIn("default", rtable[0])
+            self.assertIn("default", rtable.Destination)
         except Exception as inst:
-            raise inst
+            LOG.info(inst.args)
+            raise
 
     @services('compute', 'network')
     def test_network_basic_vmconnectivity(self):
@@ -119,8 +120,3 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
                 raise Exception("FAIL - No ip for this network : %s"
                             % server.networks)
 
-
-
-
-test = "default         10.10.1.1       0.0.0.0         UG    0      0        0 eth0 \
-        10.10.1.0       *               255.255.255.0   U     0      0        0 eth0"

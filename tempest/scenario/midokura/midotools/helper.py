@@ -1,4 +1,5 @@
 
+
 class Routetable:
 
     def __init__(cls, *args):
@@ -40,10 +41,16 @@ class Routetable:
 
     def __repr__(self):
         """Return a string representing the route"""
-        return "dest=%-16s gw=%-16s mask=%-16s iface=%s" % (self.destination,
+        return "dest=%-16s gw=%-16s mask=%-16s use=%s iface=%s" % (self.destination,
                                                             self.gateway,
                                                             self.genmask,
+                                                            self.use,
                                                             self.iface)
+
+    def is_default_route(self):
+        if self.destination is "default" or "0.0.0.0" and self.flags is "UGS" or "UC":
+            return True
+
 
     @staticmethod
     def build_route_table(route_output):
@@ -62,3 +69,4 @@ class Routetable:
                 rtable.append(r)
 
         return rtable
+
