@@ -24,8 +24,7 @@ CONF = config.CONF
 class RemoteClient():
 
     # NOTE(afazekas): It should always get an address instead of server
-    def __init__(self, server, username, password=None, pkey=None, gateway=None,
-                 gw_pk=None, gw_username=None, gw_password=None, use_gw=False):
+    def __init__(self, server, username, password=None, pkey=None, gws=[]):
         ssh_timeout = CONF.compute.ssh_timeout
         network = CONF.compute.network_for_ssh
         ip_version = CONF.compute.ip_version_for_ssh
@@ -41,9 +40,8 @@ class RemoteClient():
             else:
                 raise exceptions.ServerUnreachable()
 
-        self.ssh_client = ssh.Client(ip_address, username, password, use_gw=use_gw, gateway=gateway,
-                                     timeout=ssh_timeout, pkey=pkey, gw_password=gw_password,
-                                     gw_pkey=gw_pk, gw_username=gw_username, channel_timeout=ssh_channel_timeout)
+        self.ssh_client = ssh.Client(ip_address, username, password, timeout=ssh_timeout,
+                                     pkey=pkey, channel_timeout=ssh_channel_timeout, gws=gws)
 
     def exec_command(self, cmd, cmd_timeout=0):
         return self.ssh_client.exec_command(cmd, cmd_timeout)
@@ -114,3 +112,4 @@ class RemoteClient():
         # Get pid(s) of a process/program
         cmd = "ps -ef | grep %s | grep -v 'grep' | awk {'print $1'}" % pr_name
         return self.exec_command(cmd).split('\n')
+
