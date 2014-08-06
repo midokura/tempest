@@ -76,7 +76,7 @@ class TestNetworkBasicIntraVMConnectivity(scenario.TestScenario):
         LOG.info("Trying to ping the list of ips")
         try:
             ssh_client = self.setup_tunnel(origin[0], origin[1])
-            self.assertTrue(self._check_remote_connectivity(ssh_client,destination))
+            self.assertTrue(self._check_remote_connectivity(ssh_client, destination[0]))
         except Exception as inst:
             LOG.info(inst.args)
             LOG.info
