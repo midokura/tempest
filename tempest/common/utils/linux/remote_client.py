@@ -45,8 +45,8 @@ class RemoteClient():
                                      timeout=ssh_timeout, pkey=pkey, gw_password=gw_password,
                                      gw_pkey=gw_pk, gw_username=gw_username, channel_timeout=ssh_channel_timeout)
 
-    def exec_command(self, cmd):
-        return self.ssh_client.exec_command(cmd)
+    def exec_command(self, cmd, cmd_timeout=0):
+        return self.ssh_client.exec_command(cmd, cmd_timeout)
 
     def validate_authentication(self):
         """Validate ssh connection and authentication
