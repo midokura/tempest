@@ -139,10 +139,12 @@ class Client(object):
                             self.username, self.host, e, attempts, bsleep)
                 time.sleep(bsleep)
 
-    def _is_timed_out(self, start_time):
-        return (time.time() - self.timeout) > start_time
+    def _is_timed_out(self, start_time, timeout=0):
+        if timeout is 0:
+            timeout = self.timeout
+        return (time.time() - timeout) > start_time
 
-    def exec_command(self, cmd):
+    def exec_command(self, cmd, cmd_timeout=0):
         """
         Execute the specified command on the server.
 
@@ -167,8 +169,8 @@ class Client(object):
 
         while True:
             ready = poll.poll(self.channel_timeout)
-            if not any(ready):
-                if not self._is_timed_out(start_time):
+            if not any(ready) or cmd_timeout is not 0:
+                if not self._is_timed_out(start_time, cmd_timeout):
                     continue
                 raise exceptions.TimeoutException(
                     "Command: '{0}' executed on host '{1}'.".format(

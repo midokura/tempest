@@ -294,8 +294,15 @@ class TestScenario(manager.NetworkScenarioTest):
         access_point_ssh = self._ssh_to_server(access_point_ip,
                                                private_key=private_key)
         #fix for cirros image in order to enable a second eth
-        result = access_point_ssh.exec_command("sudo /sbin/udhcpc -i eth1")
-        LOG.debug(result)
+        #import ipdb; ipdb.set_trace()
+        if access_point_ssh.exec_command("cat /sys/class/net/eth1/operstate") is not "up\n":
+            try:
+                result = access_point_ssh.exec_command("sudo /sbin/udhcpc -i eth1", 60)
+                LOG.info(result)
+            except:
+                pass
+
+
         #return access_point_ssh
 
     def _ssh_client_server_by_gateway(self, gateway, host, gw_pk=None, gw_username=None,
