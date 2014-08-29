@@ -52,7 +52,7 @@ class TestBasicMultisubnet(scenario.TestScenario):
             'tenant_id': None,
             'type': 'default',
             'hasgateway': False,
-            'MasterKey': F,
+            'MasterKey': False,
         }
         self.scenario = {
             'tenants': [tenantA],

@@ -9,12 +9,10 @@ from tempest.openstack.common import log as logging
 from tempest.scenario import manager
 from tempest import config
 from neutronclient.common import exceptions as exc
-from pprint import pprint
 from tempest import test
-from tempest import exceptions
 from tempest.common.utils.linux import remote_client
 from tempest.scenario.midokura.midotools.admintools import TenantAdmin
-from tempest.scenario.midokura.midotools.helper import SSHTunnel
+
 
 
 CONF = config.CONF
@@ -340,9 +338,5 @@ class TestScenario(manager.NetworkScenarioTest):
                 pkey=tunnel_hops[-1][1], gws=GWS
             )
             return ssh_client
-
-    #ssh -L 4000:10.10.1.2:22 cirros@200.200.200.179
-    def build_tunnel(self, remote):
-        tunneler = SSHTunnel.tunnel()
 
 

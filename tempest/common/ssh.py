@@ -60,20 +60,7 @@ class Client(SocketServer.BaseRequestHandler):
         #GW stuff
         self.GWs = gws
         self.tunnels = []
-
-
-        """
-        self.gateway = gateway
-        self.gw_port = gw_port
-        self.gw_password = gw_password
-        self.gw_username = gw_username
-        self.gw_key_filename = gw_key_filename
-        if gw_pkey is not None and isinstance(gw_pkey, six.string_types):
-            gw_pkey = paramiko.RSAKey.from_private_key(
-                cStringIO.StringIO(str(gw_pkey)))
-        self.gw_pkey = gw_pkey
-        self.gw_ssh = None
-        """
+        self.ssh_gw = None
 
     def _get_ssh_connection(self, sleep=1.5, backoff=1):
         """Returns an ssh connection to the specified host."""
@@ -128,32 +115,37 @@ class Client(SocketServer.BaseRequestHandler):
     def _build_tunnel(self):
         """
          Builds a ssh inception tunneling with through GW added tot he list of GWs
+         This function needs a refactor!!
         """
-        for gw, dest in zip(self.GWs, self.GWs[1:]):
-            try:
-                ssh = paramiko.SSHClient()
-                ssh.set_missing_host_key_policy(
-                    paramiko.AutoAddPolicy())
+        ssh_gw = paramiko.SSHClient()
+        ssh_gw.set_missing_host_key_policy(
+             paramiko.AutoAddPolicy())
 
-                ssh_gw = paramiko.SSHClient()
-                ssh_gw.set_missing_host_key_policy(
-                    paramiko.AutoAddPolicy())
+        gw = self.GWs[0]
 
-                if isinstance(gw["pkey"], six.string_types):
-                    gw["pkey"] = paramiko.RSAKey.from_private_key(
-                    cStringIO.StringIO(str(gw["pkey"])))
+        if isinstance(gw["pkey"], six.string_types):
+            gw["pkey"] = paramiko.RSAKey.from_private_key(
+            cStringIO.StringIO(str(gw["pkey"])))
 
-                if isinstance(dest["pkey"], six.string_types):
-                    dest["pkey"] = paramiko.RSAKey.from_private_key(
-                    cStringIO.StringIO(str(dest["pkey"])))
-
-                ssh_gw.connect(gw["ip"], username=gw["username"],
+        ssh_gw.connect(gw["ip"], username=gw["username"],
                                 password=gw["password"],
                                 look_for_keys=self.look_for_keys,
                                 key_filename=gw["key_filename"],
                                 timeout=self.channel_timeout, pkey=gw["pkey"])
 
-                transport = ssh_gw.get_transport()
+        self.tunnels.append(ssh_gw)
+
+        for dest in self.GWs[1:]:
+            try:
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(
+                    paramiko.AutoAddPolicy())
+
+                if isinstance(dest["pkey"], six.string_types):
+                    dest["pkey"] = paramiko.RSAKey.from_private_key(
+                    cStringIO.StringIO(str(dest["pkey"])))
+
+                transport = self.tunnels[-1].get_transport()
                 dest_addr = (dest["ip"], 22)
                 local_addr = ('127.0.0.1', self._get_local_unused_tcp_port())
                 channel = transport.open_channel("direct-tcpip", dest_addr, local_addr)
@@ -168,14 +160,15 @@ class Client(SocketServer.BaseRequestHandler):
 
                 LOG.info("Tunnel connection %s@%s successfully created through localhost port:4000",
                                      self.username, self.host)
-                self.tunnels.append((ssh_gw, ssh))
-
+                self.tunnels.append(ssh)
             except (socket.error,
                     paramiko.SSHException):
                     raise
-        ssh_gw = self.tunnels[-1][1]
+
+        self.ssh_gw = self.tunnels[-1]
+
         try:
-            transport = ssh_gw.get_transport()
+            transport = self.ssh_gw.get_transport()
             dest_addr = (self.host, 22)
             local_addr = ('127.0.0.1', self._get_local_unused_tcp_port())
             channel = transport.open_channel("direct-tcpip", dest_addr, local_addr)
@@ -218,21 +211,6 @@ class Client(SocketServer.BaseRequestHandler):
                 # port is unused
                 LOG.info("port %d is free" % port)
                 return port
-
-    def add_gw(self, gw):
-        """
-        adds a new GW tot he list of GWs
-        :param gw: a dictionary with the GW details
-        :return:
-        """
-        if gw["pkey"] is not None and isinstance(gw["pkey"], six.string_types):
-            gw["pkey"] = paramiko.RSAKey.from_private_key(
-                cStringIO.StringIO(str(gw["pkey"])))
-        LOG.info("First ssh connection to gateway %s@%s successfully created",
-                         self.gw_username, self.gateway)
-
-        #for keeping the tunnel alive
-        self.GWs.append(gw)
 
     def exec_command(self, cmd, cmd_timeout=0):
         """

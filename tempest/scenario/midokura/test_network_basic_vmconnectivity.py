@@ -79,7 +79,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
     def _serious_test(self, remote_ip, pk):
         LOG.info("Trying to get the list of ips")
         try:
-            ssh_client = self.setup_tunnel(remote_ip, pk)
+            ssh_client = self.setup_tunnel([(remote_ip, pk)])
             net_info = ssh_client.get_ip_list()
             LOG.debug(net_info)
             pattern = re.compile('[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')

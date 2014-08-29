@@ -46,7 +46,6 @@ class TestNetworkBasicIntraVMConnectivity(scenario.TestScenario):
         self.custom_scenario(self.scenario)
 
 
-
     def _scenario_conf(self):
         serverB = {
             'floating_ip': False,
@@ -75,7 +74,7 @@ class TestNetworkBasicIntraVMConnectivity(scenario.TestScenario):
     def _ping_through_gateway(self, origin, destination):
         LOG.info("Trying to ping between %s and %s" % (origin[0], destination[0]))
         try:
-            ssh_client = self.setup_tunnel(origin[0], origin[1])
+            ssh_client = self.setup_tunnel([origin])
             self.assertTrue(self._check_remote_connectivity(ssh_client, destination[0]))
         except Exception as inst:
             LOG.info(inst.args)
@@ -118,3 +117,4 @@ class TestNetworkBasicIntraVMConnectivity(scenario.TestScenario):
         for pair in itertools.permutations(ip_pk):
             LOG.info("Checking ssh between %s %s" % (pair[0][0], pair[1][0]))
             self._ssh_through_gateway(pair[0],pair[1])
+            self._ping_through_gateway(pair[0],pair[1])
