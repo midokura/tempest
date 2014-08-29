@@ -51,7 +51,8 @@ class TestBasicMultisubnet(scenario.TestScenario):
             'networks': [networkA],
             'tenant_id': None,
             'type': 'default',
-            'hasgateway': False
+            'hasgateway': False,
+            'MasterKey': F,
         }
         self.scenario = {
             'tenants': [tenantA],

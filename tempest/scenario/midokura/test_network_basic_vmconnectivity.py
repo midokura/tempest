@@ -69,7 +69,8 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             'networks': [networkA],
             'tenant_id': None,
             'type': 'default',
-            'hasgateway': True
+            'hasgateway': True,
+            'MasterKey': False,
         }
         self.scenario = {
             'tenants': [tenantA],

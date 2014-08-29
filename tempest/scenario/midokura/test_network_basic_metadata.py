@@ -48,7 +48,8 @@ class TestMetaData(scenario.TestScenario):
             'networks': [networkA],
             'tenant_id': None,
             'type': 'default',
-            'hasgateway': False
+            'hasgateway': False,
+            'MasterKey': False,
         }
         self.scenario = {
             'tenants': [tenantA],

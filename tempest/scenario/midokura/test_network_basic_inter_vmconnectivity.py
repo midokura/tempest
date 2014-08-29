@@ -24,8 +24,8 @@ from tempest import config
 from tempest.openstack.common import log as logging
 from tempest.scenario.midokura.midotools import scenario
 import itertools
-
 from pprint import pprint
+from tempest import exceptions
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -65,15 +65,15 @@ class TestNetworkBasicIntraVMConnectivity(scenario.TestScenario):
             'networks': [networkA],
             'tenant_id': None,
             'type': 'default',
-            'hasgateway': True
+            'hasgateway': True,
+            'MasterKey': True,
         }
         self.scenario = {
             'tenants': [tenantA],
         }
 
-
     def _ping_through_gateway(self, origin, destination):
-        LOG.info("Trying to ping the list of ips")
+        LOG.info("Trying to ping between %s and %s" % (origin[0], destination[0]))
         try:
             ssh_client = self.setup_tunnel(origin[0], origin[1])
             self.assertTrue(self._check_remote_connectivity(ssh_client, destination[0]))
@@ -82,8 +82,25 @@ class TestNetworkBasicIntraVMConnectivity(scenario.TestScenario):
             LOG.info
             raise
 
+    def _ssh_through_gateway(self, origin, destination):
+        try:
+            ssh_client = self.setup_tunnel([origin, destination])
+            try:
+                result = ssh_client.get_ip_list()
+                LOG.info(result)
+                self.assertIn(destination[0], result)
+            except exceptions.SSHExecCommandFailed as e:
+                #result = ssh_client.exec_command("ping -c1 -w1 %s" % destination[0])
+                LOG.info(e.args)
+                #debug.log_net_debug()
+                #raise
+        except Exception as inst:
+            LOG.info(inst.args)
+            LOG.info
+            raise
+
     @services('compute', 'network')
-    def test_network_basic_inter_vmconnectivity(self):
+    def test_network_basic_inter_vmssh(self):
         ap_details = self.access_point.keys()[0]
         networks = ap_details.networks
         ip_pk = []
@@ -99,4 +116,5 @@ class TestNetworkBasicIntraVMConnectivity(scenario.TestScenario):
                 raise Exception("FAIL - No ip for this network : %s"
                             % server.networks)
         for pair in itertools.permutations(ip_pk):
-            self._ping_through_gateway(pair[0],pair[1])
+            LOG.info("Checking ssh between %s %s" % (pair[0][0], pair[1][0]))
+            self._ssh_through_gateway(pair[0],pair[1])

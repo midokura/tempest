@@ -14,6 +14,7 @@ from tempest import test
 from tempest import exceptions
 from tempest.common.utils.linux import remote_client
 from tempest.scenario.midokura.midotools.admintools import TenantAdmin
+from tempest.scenario.midokura.midotools.helper import SSHTunnel
 
 
 CONF = config.CONF
@@ -61,6 +62,7 @@ class TestScenario(manager.NetworkScenarioTest):
         self.subnets = []
         self.routers = []
         self.floating_ips = {}
+        self.masterkey = None
 
     def custom_scenario(self, scenario):
         tenant_id = None
@@ -70,10 +72,9 @@ class TestScenario(manager.NetworkScenarioTest):
                 self.tenants[tenant_id] = self.admin.get_tenant(tenant_id)
             else:
                 tenant_id = self._create_tenant()
-            """
-            self._create_custom_keypairs(tenant_id)
-            self._create_custom_security_groups(tenant_id)
-            """
+            if tenant['MasterKey']:
+                self._create_custom_keypairs(tenant_id)
+
             for network in tenant['networks']:
                 network['tenant_id'] = tenant_id
                 cnetwork, subnets, router = \
@@ -86,7 +87,7 @@ class TestScenario(manager.NetworkScenarioTest):
                 self.servers = {}
                 for server in network['servers']:
                     name = rand_name('server-smoke-')
-                    serv_dict = self._create_server(name, cnetwork)
+                    serv_dict = self._create_server(name, cnetwork,)
                     self.servers[serv_dict['server']] = serv_dict['keypair']
                     if server['floating_ip']:
                         self._assign_custom_floating_ips(serv_dict['server'])
@@ -111,7 +112,6 @@ class TestScenario(manager.NetworkScenarioTest):
         """
         returns the ip (floating/internal) of a server
         """
-        pprint(server)
         if floating:
             server_ip = self.floating_ips[server].floating_ip_address
         else:
@@ -133,8 +133,8 @@ class TestScenario(manager.NetworkScenarioTest):
         return tenant_id
 
     def _create_custom_keypairs(self, tenant_id):
-        self.keypairs[tenant_id] = self.create_keypair(
-            name=rand_name('keypair-smoke-'))
+        self.masterkey = self.create_keypair(
+            name="masterkey")
 
     def _create_custom_networks(self, mynetwork):
         network = self._create_network(mynetwork['tenant_id'])
@@ -201,7 +201,11 @@ class TestScenario(manager.NetworkScenarioTest):
         return subnet
 
     def _create_server(self, name, network, security_groups=None, isgateway=None):
-        keypair = self.create_keypair(name='keypair-%s' % name)
+        if not self.masterkey:
+            keypair = self.create_keypair(name='keypair-%s' % name)
+        else:
+            keypair = self.masterkey
+
         if security_groups is None:
             security_groups = [self.security_group.name]
         nics = [{'net-id': network.id}, ]
@@ -217,7 +221,6 @@ class TestScenario(manager.NetworkScenarioTest):
         return dict(server=server, keypair=keypair)
 
     def _create_servers(self):
-        pprint(self.networks)
         for i, network in enumerate(self.networks):
             name = rand_name('server-smoke-%d-' % i)
             server = self._create_server(name, network)
@@ -231,7 +234,7 @@ class TestScenario(manager.NetworkScenarioTest):
             self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
 
     def _assign_custom_floating_ips(self, server):
-        pprint("assign floating ip")
+        LOG.info("assign floating ip")
         public_network_id = CONF.network.public_network_id
         floating_ip = self._create_floating_ip(server, public_network_id)
         self.floating_ip_tuple = Floating_IP_tuple(floating_ip, server)
@@ -294,7 +297,6 @@ class TestScenario(manager.NetworkScenarioTest):
         access_point_ssh = self._ssh_to_server(access_point_ip,
                                                private_key=private_key)
         #fix for cirros image in order to enable a second eth
-        #import ipdb; ipdb.set_trace()
         if access_point_ssh.exec_command("cat /sys/class/net/eth1/operstate") is not "up\n":
             try:
                 result = access_point_ssh.exec_command("sudo /sbin/udhcpc -i eth1", 60)
@@ -305,25 +307,42 @@ class TestScenario(manager.NetworkScenarioTest):
 
         #return access_point_ssh
 
-    def _ssh_client_server_by_gateway(self, gateway, host, gw_pk=None, gw_username=None,
-                                  gw_password=None, pk=None, username=None,
-                                  password=None):
-        tunnel_client = remote_client.RemoteClient(server=host, username=username,
-                                                   password=password, pkey=pk, use_gw=True,
-                                                   gw_username=gw_username, gateway=gateway,
-                                                   gw_password=gw_password, gw_pk=gw_pk)
-        return tunnel_client
-
-    def setup_tunnel(self, remote_ip, private_key):
+    def setup_tunnel(self, tunnel_hops):
         if self.access_point:
             server, keypair = self.access_point.items()[0]
             gw_pkey = keypair.private_key
             fip = self.get_server_ip(server, floating=True)
 
-            ssh_client =self._ssh_client_server_by_gateway(gateway=fip,
-                host=remote_ip, username='cirros', password='cubswin:)', pk=private_key,
-                gw_username='cirros', gw_password='cubswin:)', gw_pk=gw_pkey
-            )
+            GWS = []
+            gw = {
+            "username": "cirros",
+             "ip": fip,
+             "password": "cubswin:)",
+             "pkey": gw_pkey,
+             "key_filename": None
+            }
+            GWS.append(gw)
 
+            #last element is the final destination
+            for host in tunnel_hops[:-1]:
+                gw_host = {
+                    "username":"cirros",
+                    "ip":host[0],
+                    "password":"cubswin:)",
+                    "pkey":host[1],
+                    "key_filename": None
+                }
+                GWS.append(gw_host)
+
+
+            ssh_client =remote_client.RemoteClient(
+                server=tunnel_hops[-1][0], username='cirros', password='cubswin:)',
+                pkey=tunnel_hops[-1][1], gws=GWS
+            )
             return ssh_client
+
+    #ssh -L 4000:10.10.1.2:22 cirros@200.200.200.179
+    def build_tunnel(self, remote):
+        tunneler = SSHTunnel.tunnel()
+
 
