@@ -89,10 +89,7 @@ class TestNetworkBasicIntraVMConnectivity(scenario.TestScenario):
                 LOG.info(result)
                 self.assertIn(destination[0], result)
             except exceptions.SSHExecCommandFailed as e:
-                #result = ssh_client.exec_command("ping -c1 -w1 %s" % destination[0])
                 LOG.info(e.args)
-                #debug.log_net_debug()
-                #raise
         except Exception as inst:
             LOG.info(inst.args)
             LOG.info
@@ -117,4 +114,5 @@ class TestNetworkBasicIntraVMConnectivity(scenario.TestScenario):
         for pair in itertools.permutations(ip_pk):
             LOG.info("Checking ssh between %s %s" % (pair[0][0], pair[1][0]))
             self._ssh_through_gateway(pair[0],pair[1])
+            LOG.info("Checking ping between %s %s" % (pair[0][0], pair[1][0]))
             self._ping_through_gateway(pair[0],pair[1])

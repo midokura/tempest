@@ -24,7 +24,7 @@ import warnings
 
 from tempest import exceptions
 from tempest.openstack.common import log as logging
-from pprint import pprint
+
 
 try:
     import SocketServer
@@ -44,19 +44,34 @@ class Client(SocketServer.BaseRequestHandler):
     def __init__(self, host, username, password=None, timeout=300, pkey=None,
                  channel_timeout=10, look_for_keys=False, key_filename=None,
                  gws=[]):
+        """
+        Added this parameter for creating ssh tunnel, it is a list of dictionaries
+            describing each "hop" inside the tunnel.
+        Example of the dictionary:
+        gw = {
+            "username": user_name,
+             "ip": ip,
+             "password": password,
+             "pkey": <the public key>,
+             "key_filename": <file name of the key, it can be set to None>
+            }
+        """
         self.host = host
         self.username = username
         self.password = password
-        if isinstance(pkey, six.string_types):
-            pkey = paramiko.RSAKey.from_private_key(
-                cStringIO.StringIO(str(pkey)))
-        self.pkey = pkey
+        self.pkey = self._fix_pkey(pkey)
         self.look_for_keys = look_for_keys
         self.key_filename = key_filename
         self.timeout = int(timeout)
         self.channel_timeout = float(channel_timeout)
         self.buf_size = 1024
-
+        self.host_dict = {
+            "username": self.username,
+            "ip": self.host,
+            "password": self.password,
+            "pkey":  self.pkey,
+            "key_filename": self.key_filename
+            }
         #GW stuff
         self.GWs = gws
         self.tunnels = []
@@ -70,7 +85,7 @@ class Client(SocketServer.BaseRequestHandler):
             paramiko.AutoAddPolicy())
 
         _start_time = time.time()
-        if self.pkey is not None:
+        if self.pkey:
             LOG.info("Creating ssh connection to '%s' as '%s'"
                      " with public key authentication",
                      self.host, self.username)
@@ -84,12 +99,7 @@ class Client(SocketServer.BaseRequestHandler):
                 if self.GWs:
                     ssh = self._build_tunnel()
                 else:
-
-                    ssh.connect(self.host, username=self.username,
-                            password=self.password,
-                            look_for_keys=self.look_for_keys,
-                            key_filename=self.key_filename,
-                            timeout=self.channel_timeout, pkey=self.pkey)
+                    ssh = self._do_connect(self.host_dict, tunnel=False)
 
                 LOG.info("ssh connection to %s@%s successfully created",
                          self.username, self.host)
@@ -115,81 +125,68 @@ class Client(SocketServer.BaseRequestHandler):
     def _build_tunnel(self):
         """
          Builds a ssh inception tunneling with through GW added tot he list of GWs
-         This function needs a refactor!!
         """
-        ssh_gw = paramiko.SSHClient()
-        ssh_gw.set_missing_host_key_policy(
-             paramiko.AutoAddPolicy())
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(
+            paramiko.AutoAddPolicy())
 
+        #First we need to setup a direct connection tot he GW machine with public IP
         gw = self.GWs[0]
-
-        if isinstance(gw["pkey"], six.string_types):
-            gw["pkey"] = paramiko.RSAKey.from_private_key(
-            cStringIO.StringIO(str(gw["pkey"])))
-
-        ssh_gw.connect(gw["ip"], username=gw["username"],
-                                password=gw["password"],
-                                look_for_keys=self.look_for_keys,
-                                key_filename=gw["key_filename"],
-                                timeout=self.channel_timeout, pkey=gw["pkey"])
-
-        self.tunnels.append(ssh_gw)
+        gw["pkey"] = self._fix_pkey(gw["pkey"])
+        ssh = self._do_connect(gw, tunnel=False)
+        self.tunnels.append(ssh)
 
         for dest in self.GWs[1:]:
-            try:
-                ssh = paramiko.SSHClient()
-                ssh.set_missing_host_key_policy(
-                    paramiko.AutoAddPolicy())
 
-                if isinstance(dest["pkey"], six.string_types):
-                    dest["pkey"] = paramiko.RSAKey.from_private_key(
-                    cStringIO.StringIO(str(dest["pkey"])))
+                dest["pkey"] = self._fix_pkey(dest["pkey"])
+                ssh = self._do_connect(dest)
+                self.tunnels.append(ssh)
 
+        ssh = self._do_connect(self.host_dict)
+        return ssh
+
+    def _do_connect(self, dest, tunnel=True):
+        """
+        :param dest: dictionary with the details of the destination machine
+        :param tunnel: if its a tunneled connection
+        :return: returns the ssh paramiko client created
+        """
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(
+            paramiko.AutoAddPolicy())
+        try:
+            if tunnel:
+                LOG.info('Connecting through the tunnel')
                 transport = self.tunnels[-1].get_transport()
                 dest_addr = (dest["ip"], 22)
                 local_addr = ('127.0.0.1', self._get_local_unused_tcp_port())
                 channel = transport.open_channel("direct-tcpip", dest_addr, local_addr)
+                hostname = 'localhost'
+            else:
+                hostname = dest["ip"]
+                channel = None
 
-                LOG.info('Connecting through the tunnel')
-                ssh.connect(hostname='localhost', username=dest["username"],
-                            password=dest["password"],
-                            look_for_keys=self.look_for_keys,
-                            key_filename=dest["key_filename"],
-                            timeout=self.channel_timeout,
-                            pkey=dest["pkey"], sock=channel)
-
-                LOG.info("Tunnel connection %s@%s successfully created through localhost port:4000",
-                                     self.username, self.host)
-                self.tunnels.append(ssh)
-            except (socket.error,
-                    paramiko.SSHException):
-                    raise
-
-        self.ssh_gw = self.tunnels[-1]
-
-        try:
-            transport = self.ssh_gw.get_transport()
-            dest_addr = (self.host, 22)
-            local_addr = ('127.0.0.1', self._get_local_unused_tcp_port())
-            channel = transport.open_channel("direct-tcpip", dest_addr, local_addr)
-
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(
-                    paramiko.AutoAddPolicy())
-            LOG.info('Connecting through the tunnel')
-            ssh.connect(hostname='localhost', username=self.username,
-                        password=self.password,
+            ssh.connect(hostname=hostname, username=dest["username"],
+                        password=dest["password"],
                         look_for_keys=self.look_for_keys,
-                        key_filename=self.key_filename,
+                        key_filename=dest["key_filename"],
                         timeout=self.channel_timeout,
-                        pkey=self.pkey, sock=channel)
-            return ssh
+                        pkey=dest["pkey"], sock=channel)
+
+            LOG.info("Connection %s@%s successfully created",
+                                 dest["username"], dest["ip"])
         except (socket.error,
-                    paramiko.SSHException):
+                paramiko.SSHException):
                     raise
-        raise Exception("something went extremely wrong")
+        return ssh
 
     def _is_timed_out(self, start_time, timeout=0):
+        """
+        :param start_time: time when the process starts
+        :param timeout: optional value, used if we want to use a different timeout
+        rather than the "class" timeout, for instance giving a timeout to a particular command
+        :return:
+        """
         if timeout is 0:
             timeout = self.timeout
         return (time.time() - timeout) > start_time
@@ -201,16 +198,24 @@ class Client(SocketServer.BaseRequestHandler):
         attempts = 0
         while attempts < 10:
             try:
-                LOG.info("is port %d free?" % port)
+                LOG.debug("is port %d free?" % port)
                 s.connect(('127.0.0.1', port))
                 s.shutdown()
 
-                LOG.info("port %d is not free" % port)
+                LOG.debug("port %d is not free" % port)
                 attempts += 1
             except:
                 # port is unused
                 LOG.info("port %d is free" % port)
                 return port
+
+    @staticmethod
+    def _fix_pkey(pkey):
+        if isinstance(pkey, six.string_types):
+            pkey = paramiko.RSAKey.from_private_key(
+                cStringIO.StringIO(str(pkey)))
+        return pkey
+
 
     def exec_command(self, cmd, cmd_timeout=0):
         """
@@ -254,8 +259,6 @@ class Client(SocketServer.BaseRequestHandler):
                 err_data += err_chunk,
             if channel.closed and not err_chunk and not out_chunk:
                 break
-            #LOG.info("error %s" % err_data)
-            #LOG.info("out %s" % out_data)
         exit_status = channel.recv_exit_status()
         if 0 != exit_status:
             raise exceptions.SSHExecCommandFailed(

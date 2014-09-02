@@ -302,9 +302,6 @@ class TestScenario(manager.NetworkScenarioTest):
             except:
                 pass
 
-
-        #return access_point_ssh
-
     def setup_tunnel(self, tunnel_hops):
         if self.access_point:
             server, keypair = self.access_point.items()[0]
