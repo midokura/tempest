@@ -45,8 +45,11 @@ class Client(SocketServer.BaseRequestHandler):
                  channel_timeout=10, look_for_keys=False, key_filename=None,
                  gws=[]):
         """
-        Added this parameter for creating ssh tunnel, it is a list of dictionaries
-            describing each "hop" inside the tunnel.
+        Added this parameter for creating ssh tunnel, it is a list
+        of dictionaries describing each "hop" inside the tunnel.
+        The first hop should have a (public) ip reachable from
+        the machine that is running the tempest test.
+        Also, every hop should be reachable by the previous hop.
         Example of the dictionary:
         gw = {
             "username": user_name,
@@ -55,6 +58,10 @@ class Client(SocketServer.BaseRequestHandler):
              "pkey": <the public key>,
              "key_filename": <file name of the key, it can be set to None>
             }
+        # GW variables
+            self.GWs = gws
+            self.tunnels = []
+            self.ssh_gw = None
         """
         self.host = host
         self.username = username
@@ -69,10 +76,11 @@ class Client(SocketServer.BaseRequestHandler):
             "username": self.username,
             "ip": self.host,
             "password": self.password,
-            "pkey":  self.pkey,
+            "pkey": self.pkey,
             "key_filename": self.key_filename
-            }
-        #GW stuff
+        }
+
+        # GW variables
         self.GWs = gws
         self.tunnels = []
         self.ssh_gw = None
@@ -124,13 +132,15 @@ class Client(SocketServer.BaseRequestHandler):
 
     def _build_tunnel(self):
         """
-         Builds a ssh inception tunneling with through GW added tot he list of GWs
+         Builds a ssh inception tunneling with
+         through GW added tot he list of GWs
         """
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(
             paramiko.AutoAddPolicy())
 
-        #First we need to setup a direct connection tot he GW machine with public IP
+        # First we need to setup a direct connection
+        # to the GW machine with public IP
         gw = self.GWs[0]
         gw["pkey"] = self._fix_pkey(gw["pkey"])
         ssh = self._do_connect(gw, tunnel=False)
@@ -147,6 +157,7 @@ class Client(SocketServer.BaseRequestHandler):
 
     def _do_connect(self, dest, tunnel=True):
         """
+        Function the wraps the different "connects" that could appear
         :param dest: dictionary with the details of the destination machine
         :param tunnel: if its a tunneled connection
         :return: returns the ssh paramiko client created
@@ -160,7 +171,9 @@ class Client(SocketServer.BaseRequestHandler):
                 transport = self.tunnels[-1].get_transport()
                 dest_addr = (dest["ip"], 22)
                 local_addr = ('127.0.0.1', self._get_local_unused_tcp_port())
-                channel = transport.open_channel("direct-tcpip", dest_addr, local_addr)
+                channel = transport.open_channel("direct-tcpip",
+                                                 dest_addr,
+                                                 local_addr)
                 hostname = 'localhost'
             else:
                 hostname = dest["ip"]
@@ -174,7 +187,7 @@ class Client(SocketServer.BaseRequestHandler):
                         pkey=dest["pkey"], sock=channel)
 
             LOG.info("Connection %s@%s successfully created",
-                                 dest["username"], dest["ip"])
+                     dest["username"], dest["ip"])
         except (socket.error,
                 paramiko.SSHException):
                     raise
@@ -183,9 +196,11 @@ class Client(SocketServer.BaseRequestHandler):
     def _is_timed_out(self, start_time, timeout=0):
         """
         :param start_time: time when the process starts
-        :param timeout: optional value, used if we want to use a different timeout
-        rather than the "class" timeout, for instance giving a timeout to a particular command
-        :return:
+        :param timeout: optional value, used if we want
+        to use a different timeout
+        rather than the "class" timeout,
+        for instance giving a timeout to a particular command
+        :return: True if the timeout is surpassed
         """
         if timeout is 0:
             timeout = self.timeout
@@ -204,7 +219,7 @@ class Client(SocketServer.BaseRequestHandler):
 
                 LOG.debug("port %d is not free" % port)
                 attempts += 1
-            except:
+            except Exception:
                 # port is unused
                 LOG.info("port %d is free" % port)
                 return port
@@ -215,7 +230,6 @@ class Client(SocketServer.BaseRequestHandler):
             pkey = paramiko.RSAKey.from_private_key(
                 cStringIO.StringIO(str(pkey)))
         return pkey
-
 
     def exec_command(self, cmd, cmd_timeout=0):
         """

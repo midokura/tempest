@@ -40,10 +40,22 @@ class RemoteClient():
             else:
                 raise exceptions.ServerUnreachable()
 
-        self.ssh_client = ssh.Client(ip_address, username, password, timeout=ssh_timeout,
-                                     pkey=pkey, channel_timeout=ssh_channel_timeout, gws=gws)
+        self.ssh_client = ssh.Client(ip_address,
+                                     username,
+                                     password,
+                                     timeout=ssh_timeout,
+                                     pkey=pkey,
+                                     channel_timeout=ssh_channel_timeout,
+                                     gws=gws)
 
     def exec_command(self, cmd, cmd_timeout=0):
+        """
+        function that wraps the paramiko exec_command
+        :param cmd: command to execute
+        :param cmd_timeout: custom timeout for the
+        concrete command to execute.
+        :return: returns the contend of the execution
+        """
         return self.ssh_client.exec_command(cmd, cmd_timeout)
 
     def validate_authentication(self):
@@ -112,4 +124,3 @@ class RemoteClient():
         # Get pid(s) of a process/program
         cmd = "ps -ef | grep %s | grep -v 'grep' | awk {'print $1'}" % pr_name
         return self.exec_command(cmd).split('\n')
-
