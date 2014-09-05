@@ -1,5 +1,17 @@
-import subprocess
-import shlex
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+__author__ = 'Albert'
+__email__ = "albert.vico@midokura.com"
+
 
 class Routetable:
 
@@ -22,7 +34,7 @@ class Routetable:
 
     def init_from_line(self, line):
         """
-        default         10.10.1.1       0.0.0.0         U     0      0      0       eth0
+            default 10.10.1.1 0.0.0.0 U 0 0 0 eth0
         """
         cols = line.split(None)
         try:
@@ -42,25 +54,29 @@ class Routetable:
 
     def __repr__(self):
         """Return a string representing the route"""
-        return "dest=%-16s gw=%-16s mask=%-16s use=%s iface=%s" % (self.destination,
-                                                            self.gateway,
-                                                            self.genmask,
-                                                            self.use,
-                                                            self.iface)
+        return "dest=%-16s gw=%-16s mask=%-16s use=%s iface=%s" % \
+               (self.destination,
+                self.gateway,
+                self.genmask,
+                self.use,
+                self.iface)
 
     def is_default_route(self):
-        if self.destination is "default" or "0.0.0.0" and self.flags is "UGS" or "UC":
+        if self.destination is "default" \
+                or "0.0.0.0" \
+                and self.flags \
+                is "UGS" \
+                or "UC":
             return True
-
 
     @staticmethod
     def build_route_table(route_output):
         """
         ***Builds a route table from the route command output:***
         Kernel IP routing table
-        Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-        default         10.10.1.1       0.0.0.0         U     0      0        0 eth0
-        10.10.1.0       *               255.255.255.0   U     0      0        0 eth0
+        Destination Gateway    Genmask        Flags Metric Ref Use Iface
+        default     10.10.1.1  0.0.0.0        U     0      0   0   eth0
+        10.10.1.0   *          255.255.255.0  U     0      0   0   eth0
         """
         rtable = []
         lines = route_output.split("\n")
@@ -70,45 +86,3 @@ class Routetable:
                 rtable.append(r)
 
         return rtable
-
-
-class SSHTunnel:
-
-    #ssh -L 4000:10.10.1.2:22 cirros@200.200.200.179
-    def __init__(cls, username="cirros", destination="10.10.1.2",
-                  gateway="200.200.200.179", localport=4000, remotePort=22):
-        cls.username = username
-        cls.destination = destination
-        cls.gateway = gateway
-        cls.localport = localport
-        cls.remotePort = remotePort
-        cls.tunnel = None
-
-    def _check_gateway_reachability(self):
-        cmd = "ping -c1 -w1 %s" % self.gateway
-        args = shlex.split(cmd)
-        ping = subprocess.call(args)
-        if ping is not 0:
-            return False
-        return True
-
-    def build_tunnel(self):
-        cmd = "ssh -L {0}:{1}:{2} {3}@{4}".format(self.localport, self.destination, self.remotePort,
-                                                  self.username, self.gateway)
-        args = shlex.split(cmd)
-        self.tunnel = subprocess.Popen(args, stdin=subprocess.PIPE,
-                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        subprocess.setNonBlocking(self.tunnel.stdout)
-        subprocess.setNonBlocking(self.tunnel.stderr)
-
-        while True:
-            try:
-                output = self.tunnel.stdout.read()
-            except IOError:
-                continue
-            else:
-                break
-
-
-    def __del__(self):
-        self.tunnel.kill()

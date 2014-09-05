@@ -1,11 +1,22 @@
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 __author__ = 'Albert'
 __email__ = "albert.vico@midokura.com"
 
+import netaddr
+
 from tempest.openstack.common import log as logging
-from tempest import test
-from pprint import pprint
 from tempest.scenario.midokura.midotools import scenario
-from netaddr import IPNetwork, IPAddress
+from tempest import test
 
 
 LOG = logging.getLogger(__name__)
@@ -52,7 +63,7 @@ class TestBasicMultisubnet(scenario.TestScenario):
             'tenant_id': None,
             'type': 'default',
             'hasgateway': False,
-            'MasterKey': F,
+            'MasterKey': False,
         }
         self.scenario = {
             'tenants': [tenantA],
@@ -65,13 +76,11 @@ class TestBasicMultisubnet(scenario.TestScenario):
             network = server.addresses
             key, value = network.popitem()
             ip = value[0]['addr']
-            pprint(ip)
-            if IPAddress(ip) in IPNetwork(CIDR1):
+            if netaddr.IPAddress(ip) in netaddr.IPNetwork(CIDR1):
                 s1 += 1
             else:
                 s2 += 1
         return s1 == 4 or s2 == 4
-
 
     @test.attr(type='smoke')
     @test.services('compute', 'network')
