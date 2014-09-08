@@ -12,7 +12,6 @@
 __author__ = 'Albert'
 __email__ = "albert.vico@midokura.com"
 
-
 import itertools
 
 from tempest import exceptions
@@ -22,35 +21,41 @@ from tempest import test
 
 LOG = logging.getLogger(__name__)
 CIDR1 = "10.10.1.0/24"
+CIDR2 = "10.10.2.0/24"
 
 
-class TestNetworkBasicInterVMConnectivity(scenario.TestScenario):
+class TestNetworkAdvancedInterVMConnectivity(scenario.TestScenario):
     """
         Scenario:
-        A launched VM should get an ip address
-        and routing table entries from DHCP. And
-        it should be able to metadata service.
+        VMs with "default" security groups can
+        on different networks connected by a common
+        router should be able to talk to each other
 
         Pre-requisites:
         1 tenant
-        1 network
+        2 network
+        1 router
         2 VMs
 
         Steps:
-        1. create a network
-        2. launch 2 VMs
-        3. verify that 2 VMs can ping each other
+        1. create two networks with subnets
+        2. create a router
+        3. connect a router with both subnets
+        4.  launch one VM for each network
+        5. verify that VMs can ping and ssh each other
 
         Expected results:
-        ping works
+        Ping should work.
+        SSH should work.
     """
+
     @classmethod
     def setUpClass(cls):
-        super(TestNetworkBasicInterVMConnectivity, cls).setUpClass()
+        super(TestNetworkAdvancedInterVMConnectivity, cls).setUpClass()
         cls.check_preconditions()
 
     def setUp(self):
-        super(TestNetworkBasicInterVMConnectivity, self).setUp()
+        super(TestNetworkAdvancedInterVMConnectivity, self).setUp()
         self.security_group = \
             self._create_security_group_neutron(
                 tenant_id=self.tenant_id)
@@ -61,19 +66,34 @@ class TestNetworkBasicInterVMConnectivity(scenario.TestScenario):
         serverB = {
             'floating_ip': False,
         }
+        routerA = {
+            "public": False,
+            "name": "router_1"
+        }
         subnetA = {
             "network_id": None,
             "ip_version": 4,
             "cidr": CIDR1,
             "allocation_pools": None,
-            "routers": None,
+            "routers": [routerA],
+        }
+        subnetB = {
+            "network_id": None,
+            "ip_version": 4,
+            "cidr": CIDR2,
+            "allocation_pools": None,
+            "routers": [routerA],
         }
         networkA = {
             'subnets': [subnetA],
-            'servers': [serverB, serverB],
+            'servers': [serverB],
+        }
+        networkB = {
+            'subnets': [subnetB],
+            'servers': [serverB],
         }
         tenantA = {
-            'networks': [networkA],
+            'networks': [networkA, networkB],
             'tenant_id': None,
             'type': 'default',
             'hasgateway': True,
@@ -92,7 +112,6 @@ class TestNetworkBasicInterVMConnectivity(scenario.TestScenario):
                 ssh_client, destination[0]))
         except Exception as inst:
             LOG.info(inst.args)
-            LOG.info
             raise
 
     def _ssh_through_gateway(self, origin, destination):
@@ -107,11 +126,10 @@ class TestNetworkBasicInterVMConnectivity(scenario.TestScenario):
                 LOG.info(e.args)
         except Exception as inst:
             LOG.info(inst.args)
-            LOG.info
             raise
 
     @test.services('compute', 'network')
-    def test_network_basic_inter_vmssh(self):
+    def test_network_advanced_inter_vmssh(self):
         ap_details = self.access_point.keys()[0]
         networks = ap_details.networks
         ip_pk = []

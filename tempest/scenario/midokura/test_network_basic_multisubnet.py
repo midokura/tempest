@@ -46,13 +46,15 @@ class TestBasicMultisubnet(scenario.TestScenario):
             "network_id": None,
             "ip_version": 4,
             "cidr": CIDR1,
-            "allocation_pools": None
+            "allocation_pools": None,
+            "routers": None,
         }
         subnetB = {
             "network_id": None,
             "ip_version": 4,
             "cidr": CIDR2,
-            "allocation_pools": None
+            "allocation_pools": None,
+            "routers": None,
         }
         networkA = {
             'subnets': [subnetA, subnetB],
