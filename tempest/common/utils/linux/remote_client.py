@@ -24,7 +24,8 @@ CONF = config.CONF
 class RemoteClient():
 
     # NOTE(afazekas): It should always get an address instead of server
-    def __init__(self, server, username, password=None, pkey=None, gws=[]):
+    # Added a new parameter "GW" for allowing the use of multi host tunneling
+    def __init__(self, server, username, password=None, pkey=None, gws=None):
         ssh_timeout = CONF.compute.ssh_timeout
         network = CONF.compute.network_for_ssh
         ip_version = CONF.compute.ip_version_for_ssh

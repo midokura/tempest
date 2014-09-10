@@ -69,7 +69,10 @@ class TestScenario(manager.NetworkScenarioTest):
         self.networks = []
         self.subnets = []
         self.routers = []
+        # saving the internal routers in a different list
+        self.internal_routers= []
         self.floating_ips = {}
+        self.servers = {}
         self.masterkey = None
 
     def custom_scenario(self, scenario):
@@ -89,20 +92,21 @@ class TestScenario(manager.NetworkScenarioTest):
                 cnetwork, subnets, router = \
                     self._create_custom_networks(network)
                 self.networks.append(cnetwork)
+                # Using extend because subnets is already a list
                 self.subnets.extend(subnets)
                 if router:
                     self.routers.append(router)
                 self._check_networks()
-                self.servers = {}
                 for server in network['servers']:
                     name = data_utils.rand_name('server-smoke-')
                     serv_dict = \
                         self._create_server(name, cnetwork,)
-                    self.servers[serv_dict['server']] = \
-                        serv_dict['keypair']
+                    self.servers.update({serv_dict['server']:
+                                        serv_dict['keypair']})
                     if server['floating_ip']:
                         self._assign_custom_floating_ips(
                             serv_dict['server'])
+
             if tenant['hasgateway']:
                 self._build_gateway(self.tenants[tenant_id])
 
@@ -159,12 +163,50 @@ class TestScenario(manager.NetworkScenarioTest):
             router = \
                 self._get_router(mynetwork['tenant_id'])
         for mysubnet in mynetwork['subnets']:
-            subnet = \
-                self._create_custom_subnet(network, mysubnet)
+            routers = []
+            if mysubnet['routers']:
+                for r in mysubnet['routers']:
+                    if not self.internal_routers or not \
+                            all(map(lambda x: True if r["name"] in
+                                    x.values() else False, self.internal_routers)):
+                        myrouter = \
+                            self._create_custom_router(mynetwork['tenant_id'], name=r["name"])
+                        self.internal_routers.append(myrouter)
+                    else:
+                        # should have a hit
+                        myrouter = \
+                            [rr for rr in self.internal_routers if rr["name"] in r["name"]][0]
+                    routers.append(myrouter)
+            # subnet needs to be created after the router or
+            # the teardown process will fail
+            subnet = self._create_custom_subnet(network, mysubnet)
+            # bounding routers created for this subnet to the subnet
+            for myrouter in routers:
+                subnet.add_to_router(myrouter["id"])
             subnets.append(subnet)
+            # only for external router
             if router:
                 subnet.add_to_router(router.id)
         return network, subnets, router
+
+    def _create_custom_router(self, tenant_id, name=None):
+        if not name:
+            name = data_utils.rand_name("router-smoke-")
+
+        body = dict(
+            router=dict(
+                name=name,
+                admin_state_up=True,
+                tenant_id=tenant_id,
+            ),
+        )
+
+        result = self.network_client.create_router(body=body)
+        router = net_common.DeletableRouter(client=self.network_client,
+                                            **result['router'])
+        self.assertEqual(router["name"], name)
+        self.addCleanup(self.delete_wrapper, router)
+        return router
 
     def _check_networks(self):
         # Checks that we see the newly
@@ -328,14 +370,16 @@ class TestScenario(manager.NetworkScenarioTest):
         access_point_ssh = self._ssh_to_server(access_point_ip,
                                                private_key=private_key)
         # fix for cirros image in order to enable a second eth
-        if access_point_ssh.exec_command(
-                "cat /sys/class/net/eth1/operstate") is not "up\n":
-            try:
-                result = access_point_ssh.exec_command(
-                    "sudo /sbin/udhcpc -i eth1", 30)
-                LOG.info(result)
-            except Exception:
-                pass
+        for net in xrange(1, len(server.networks.keys())):
+            if access_point_ssh.exec_command(
+                    "cat /sys/class/net/eth{0}/operstate".format(net)) \
+                    is not "up\n":
+                try:
+                    result = access_point_ssh.exec_command(
+                        "sudo /sbin/udhcpc -i eth{0}".format(net), 30)
+                    LOG.info(result)
+                except Exception:
+                    pass
 
     def setup_tunnel(self, tunnel_hops):
         if self.access_point:

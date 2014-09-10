@@ -73,7 +73,8 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             "network_id": None,
             "ip_version": 4,
             "cidr": CIDR1,
-            "allocation_pools": None
+            "allocation_pools": None,
+            "routers": None,
         }
         networkA = {
             'subnets': [subnetA],
@@ -134,3 +135,4 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
                          % server.networks[name][0])
                 raise Exception("FAIL - No ip for this network : %s"
                                 % server.networks)
+        LOG.info("test finished, tearing down now ....")

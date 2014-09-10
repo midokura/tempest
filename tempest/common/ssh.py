@@ -43,7 +43,7 @@ class Client(SocketServer.BaseRequestHandler):
 
     def __init__(self, host, username, password=None, timeout=300, pkey=None,
                  channel_timeout=10, look_for_keys=False, key_filename=None,
-                 gws=[]):
+                 gws=None):
         """
         Added this parameter for creating ssh tunnel, it is a list
         of dictionaries describing each "hop" inside the tunnel.
