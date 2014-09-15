@@ -85,6 +85,8 @@ class TestNetworkAdvancedInterVMConnectivity(scenario.TestScenario):
             "cidr": CIDR2,
             "allocation_pools": None,
             "routers": [routerA],
+             "dns": [],
+            "routes": [],
         }
         networkA = {
             'subnets': [subnetA],

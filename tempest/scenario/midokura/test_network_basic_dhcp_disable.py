@@ -25,25 +25,17 @@ CIDR1 = "10.10.10.0/24"
 class TestNetworkBasicDhcpDisable(scenario.TestScenario):
     """
         Scenario:
-            a VM obtains a DHCP lease with host routes
-
-        Pre-requisites:
+            Ability to disable DHCP
+        Prerequisite:
             1 tenant
             1 network
-            1 VM
-
+            1 vm
         Steps:
-            1) Spawn a VM.
-            2)Get a dhcp lease.
-            3) configure the subnetwork CDIR:10.10.10.0/24 with a
-            DNS: 8.8.8.8 and a route: Destination 172.20.0.0/24 :
-            Next hop 10.10.10.10
-            3) Verify the routes and DNS entry (on cirros,
-            capture the traffic from tap, since it doesn't allow
-             getting routes in DHCP)
-
-        Expected results:
-            Packets with the routes and the dns entry should reach the vm.
+            1) spawn the VM
+            2) Disable the DHCP
+            3) try to renew DHCP
+        Expected result:
+            can't renew the dhcp
     """
 
     @classmethod
@@ -85,3 +77,16 @@ class TestNetworkBasicDhcpDisable(scenario.TestScenario):
         self.scenario = {
             'tenants': [tenantA],
         }
+
+    # this should be ported to "linux_client" class
+    def _do_dhcp_lease(self, remote_ip,pk):
+        try:
+            ssh_client = self.setup_tunnel([(remote_ip, pk)])
+            pid = ssh_client.exec_command("ps fuax | grep udhcp | "
+                                          "awk '{print $1}'").split("\n")[0]
+            LOG.info(pid)
+            out = ssh_client.exec_command("sudo kill -USR1 %s" % pid)
+            LOG.info(out)
+        except Exception as inst:
+            LOG.info(inst.args)
+            raise
