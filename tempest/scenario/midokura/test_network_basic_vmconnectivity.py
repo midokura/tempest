@@ -75,6 +75,8 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             "cidr": CIDR1,
             "allocation_pools": None,
             "routers": None,
+            "dns": [],
+            "routes": [],
         }
         networkA = {
             'subnets': [subnetA],

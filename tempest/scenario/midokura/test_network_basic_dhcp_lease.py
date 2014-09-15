@@ -13,7 +13,6 @@
 __author__ = 'Albert'
 __email__ = "albert.vico@midokura.com"
 
-import re
 
 from tempest.openstack.common import log as logging
 from tempest.scenario.midokura.midotools import helper
