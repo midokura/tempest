@@ -106,9 +106,9 @@ class RemoteClient():
         cmd = "/sbin/ifconfig | awk '/HWaddr/ {print $5}'"
         return self.exec_command(cmd)
 
-    def get_ip_list(self):
+    def get_ip_list(self, timeout=0):
         cmd = "/bin/ip address"
-        return self.exec_command(cmd)
+        return self.exec_command(cmd, cmd_timeout=timeout)
 
     def assign_static_ip(self, nic, addr):
         cmd = "sudo /bin/ip addr add {ip}/{mask} dev {nic}".format(

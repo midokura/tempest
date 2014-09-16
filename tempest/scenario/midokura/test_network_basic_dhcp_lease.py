@@ -13,6 +13,8 @@
 __author__ = 'Albert'
 __email__ = "albert.vico@midokura.com"
 
+import threading
+import time
 
 from tempest.openstack.common import log as logging
 from tempest.scenario.midokura.midotools import helper
@@ -117,7 +119,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
             LOG.info(inst.args)
             raise
 
-    def _get_udhcp_pid(self, remote_ip,pk):
+    def _do_dhcp_lease(self, remote_ip,pk):
         try:
             ssh_client = self.setup_tunnel([(remote_ip, pk)])
             pid = ssh_client.exec_command("ps fuax | grep udhcp | "
@@ -128,6 +130,10 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
         except Exception as inst:
             LOG.info(inst.args)
             raise
+
+    def _stop_threads(self):
+        while threading.active_count() > 1:
+                    time.sleep(0.1)
 
     @test.services('compute', 'network')
     def test_network_basic_dhcp_lease_full(self):
@@ -143,7 +149,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                 LOG.info("Checking the routes and DNS before the lease")
                 self._check_routes(remote_ip, pk)
                 self._check_dns(remote_ip, pk)
-                self._get_udhcp_pid(remote_ip, pk)
+                self._do_dhcp_lease(remote_ip, pk)
                 LOG.info("Checking the routes and DNS after the lease")
                 self._check_routes(remote_ip, pk)
                 self._check_dns(remote_ip, pk)
@@ -153,6 +159,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                 raise Exception("FAIL - No ip for this network : %s"
                                 % server.networks)
         LOG.info("test finished, tearing down now ....")
+        self._stop_threads()
 
     @test.services('compute', 'network')
     def test_network_basic_dhcp_lease_dns(self):
@@ -166,7 +173,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                 pk = self.servers[server].private_key
                 LOG.info("Checking the DNS before the lease")
                 self._check_dns(remote_ip, pk)
-                self._get_udhcp_pid(remote_ip, pk)
+                self._do_dhcp_lease(remote_ip, pk)
                 LOG.info("Checking the DNS after the lease")
                 self._check_dns(remote_ip, pk)
             else:
@@ -175,6 +182,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                 raise Exception("FAIL - No ip for this network : %s"
                                 % server.networks)
         LOG.info("test finished, tearing down now ....")
+        self._stop_threads()
 
     @test.services('compute', 'network')
     def test_network_basic_dhcp_lease_routes(self):
@@ -188,7 +196,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                 pk = self.servers[server].private_key
                 LOG.info("Checking the DNS before the lease")
                 self._check_routes(remote_ip, pk)
-                self._get_udhcp_pid(remote_ip, pk)
+                self._do_dhcp_lease(remote_ip, pk)
                 LOG.info("Checking the DNS after the lease")
                 self._check_routes(remote_ip, pk)
             else:
@@ -197,3 +205,4 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                 raise Exception("FAIL - No ip for this network : %s"
                                 % server.networks)
         LOG.info("test finished, tearing down now ....")
+        self._stop_threads()

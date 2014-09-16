@@ -14,6 +14,8 @@ __email__ = "albert.vico@midokura.com"
 
 
 import itertools
+import threading
+import time
 
 from tempest import exceptions
 from tempest.openstack.common import log as logging
@@ -137,3 +139,5 @@ class TestNetworkBasicInterVMConnectivity(scenario.TestScenario):
                      % (pair[0][0], pair[1][0]))
             self._ping_through_gateway(pair[0], pair[1])
         LOG.info("test finished, tearing down now ....")
+        while threading.active_count() > 1:
+                    time.sleep(0.1)

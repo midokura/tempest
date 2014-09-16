@@ -324,6 +324,17 @@ class TestScenario(manager.NetworkScenarioTest):
                          "Unable to determine which port to target.")
         return ports[0]['id']
 
+    def _toggle_dhcp(self, subnet_id, enable=False):
+        subnet = {
+            "subnet":{
+                "enable_dhcp": enable,
+            }
+        }
+        result = self.network_client.update_subnet(subnet_id, subnet)
+        subnet = result["subnet"]
+        self.assertEqual(subnet["enable_dhcp"], enable)
+        LOG.debug(result)
+
     """
     GateWay methods
     """
