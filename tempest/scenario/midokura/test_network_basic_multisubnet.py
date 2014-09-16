@@ -48,6 +48,8 @@ class TestBasicMultisubnet(scenario.TestScenario):
             "cidr": CIDR1,
             "allocation_pools": None,
             "routers": None,
+            "dns": [],
+            "routes": [],
         }
         subnetB = {
             "network_id": None,
@@ -55,6 +57,8 @@ class TestBasicMultisubnet(scenario.TestScenario):
             "cidr": CIDR2,
             "allocation_pools": None,
             "routers": None,
+            "dns": [],
+            "routes": [],
         }
         networkA = {
             'subnets': [subnetA, subnetB],

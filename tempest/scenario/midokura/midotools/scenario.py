@@ -180,7 +180,7 @@ class TestScenario(manager.NetworkScenarioTest):
             # subnet needs to be created after the router or
             # the teardown process will fail
             subnet = self._create_custom_subnet(network, mysubnet)
-            # bounding routers created for this subnet to the subnet
+            # binding routers created for this subnet to the subnet
             for myrouter in routers:
                 subnet.add_to_router(myrouter["id"])
             subnets.append(subnet)
@@ -248,6 +248,8 @@ class TestScenario(manager.NetworkScenarioTest):
                 network_id=network.id,
                 tenant_id=network.tenant_id,
                 cidr=str(mysubnet["cidr"]),
+                host_routes=mysubnet["routes"],
+                dns_nameservers=mysubnet["dns"],
             ),
         )
         try:

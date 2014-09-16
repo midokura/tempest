@@ -68,6 +68,14 @@ class Routetable:
                 is "UGS" \
                 or "UC":
             return True
+        else:
+            return False
+
+    def is_custom_route(self, destination, gateway):
+        if self.destination == destination and self.gateway == gateway:
+            return True
+        else:
+            return False
 
     @staticmethod
     def build_route_table(route_output):
