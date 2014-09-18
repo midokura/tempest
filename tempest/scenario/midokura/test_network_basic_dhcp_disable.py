@@ -55,6 +55,7 @@ class TestNetworkBasicDhcpDisable(scenario.TestScenario):
     def _scenario_conf(self):
         serverB = {
             'floating_ip': False,
+            'sg': None,
         }
         subnetA = {
             "network_id": None,
@@ -114,6 +115,7 @@ class TestNetworkBasicDhcpDisable(scenario.TestScenario):
             else:
                 raise
 
+    @test.attr(type='smoke')
     @test.services('compute', 'network')
     def test_network_basic_dhcp_disable(self):
         ap_details = self.access_point.keys()[0]

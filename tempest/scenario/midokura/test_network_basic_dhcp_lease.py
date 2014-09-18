@@ -65,6 +65,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
     def _scenario_conf(self):
         serverB = {
             'floating_ip': False,
+            'sg': None,
         }
         subnetA = {
             "network_id": None,
@@ -135,6 +136,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
         while threading.active_count() > 1:
                     time.sleep(0.1)
 
+    @test.attr(type='smoke')
     @test.services('compute', 'network')
     def test_network_basic_dhcp_lease_full(self):
         ap_details = self.access_point.keys()[0]
@@ -161,6 +163,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
         LOG.info("test finished, tearing down now ....")
         self._stop_threads()
 
+    @test.attr(type='smoke')
     @test.services('compute', 'network')
     def test_network_basic_dhcp_lease_dns(self):
         ap_details = self.access_point.keys()[0]
@@ -184,6 +187,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
         LOG.info("test finished, tearing down now ....")
         self._stop_threads()
 
+    @test.attr(type='smoke')
     @test.services('compute', 'network')
     def test_network_basic_dhcp_lease_routes(self):
         ap_details = self.access_point.keys()[0]

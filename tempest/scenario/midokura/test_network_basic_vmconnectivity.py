@@ -68,6 +68,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
     def _scenario_conf(self):
         serverB = {
             'floating_ip': False,
+            'sg': None,
         }
         subnetA = {
             "network_id": None,
@@ -121,6 +122,7 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             LOG.info(inst.args)
             raise
 
+    @test.attr(type='smoke')
     @test.services('compute', 'network')
     def test_network_basic_vmconnectivity(self):
         ap_details = self.access_point.keys()[0]

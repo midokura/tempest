@@ -14,58 +14,58 @@ __email__ = "albert.vico@midokura.com"
 
 import itertools
 
-
 from tempest.openstack.common import log as logging
 from tempest.scenario.midokura.midotools import scenario
 from tempest import test
 
 LOG = logging.getLogger(__name__)
-CIDR1 = "10.10.1.0/24"
+CIDR1 = "10.10.10.0/24"
 CIDR2 = "10.10.2.0/24"
 
 
-class TestNetworkAdvancedInterVMConnectivity(scenario.TestScenario):
+class TestNetworkBasicSecurityGroups(scenario.TestScenario):
     """
         Scenario:
-        VMs with "default" security groups can
-        on different networks connected by a common
-        router should be able to talk to each other
-
-        Pre-requisites:
-        1 tenant
-        2 network
-        1 router
-        2 VMs
-
+            launch 2 VMs in the "default" security group
+            they should be able to communicate over icmp, tcp, udp
+        Prerequisite:
+            1 tenant
+            2 networks net-a and net-b
+            1 router
+            1 extra SG "sg1" is created with default rules
+            2 VMs one on each network
         Steps:
-        1. create two networks with subnets
-        2. create a router
-        3. connect a router with both subnets
-        4.  launch one VM for each network
-        5. verify that VMs can ping and ssh each other
-
-        Expected results:
-        Ping should work.
-        SSH should work.
+            launch vm1 on net-a with the "default" SG
+            launch vm2 on net-b with the "default" SG
+            launch vm3 on net-a with the "sg1" SG
+            verify that vm1 can ping to vm2
+            verify that vm1 can ssh into vm2
+            verify that vm1 can talk to vm2 over udp
+            verify that vm3 cannot be talk to vm1 or vm2
+        Expected result:
+            vm3 can ping to vm1 and vm2 but not vice versa
     """
 
     @classmethod
     def setUpClass(cls):
-        super(TestNetworkAdvancedInterVMConnectivity, cls).setUpClass()
+        super(TestNetworkBasicSecurityGroups, cls).setUpClass()
         cls.check_preconditions()
 
     def setUp(self):
-        super(TestNetworkAdvancedInterVMConnectivity, self).setUp()
+        super(TestNetworkBasicSecurityGroups, self).setUp()
         self.security_group = \
-            self._create_security_group_neutron(
-                tenant_id=self.tenant_id)
+            self._create_security_group_neutron(tenant_id=self.tenant_id)
         self._scenario_conf()
         self.custom_scenario(self.scenario)
 
     def _scenario_conf(self):
-        serverB = {
+        vm1 = {
             'floating_ip': False,
-            'sg': None,
+            'sg': ["default"],
+        }
+        vm2 = {
+            'floating_ip': False,
+            'sg': ["default"],
         }
         routerA = {
             "public": False,
@@ -91,11 +91,11 @@ class TestNetworkAdvancedInterVMConnectivity(scenario.TestScenario):
         }
         networkA = {
             'subnets': [subnetA],
-            'servers': [serverB],
+            'servers': [vm1],
         }
         networkB = {
             'subnets': [subnetB],
-            'servers': [serverB],
+            'servers': [vm2],
         }
         tenantA = {
             'networks': [networkA, networkB],
@@ -108,9 +108,17 @@ class TestNetworkAdvancedInterVMConnectivity(scenario.TestScenario):
             'tenants': [tenantA],
         }
 
+    def _create_vm3_and_sg1(self):
+        # creates the vm3 and assigns it sc "sg1"
+        net = self.networks[0]
+        sg = self._create_custom_security_group("sg1")
+        server = self._create_server("vm3", net, security_groups=[sg.name])['server']
+        return server
+
     @test.attr(type='smoke')
     @test.services('compute', 'network')
-    def test_network_advanced_inter_vmssh(self):
+    def test_network_basic_security_group(self):
+        # we get the access point server
         ap_details = self.access_point.keys()[0]
         networks = ap_details.networks
         ip_pk = []
@@ -127,10 +135,32 @@ class TestNetworkAdvancedInterVMConnectivity(scenario.TestScenario):
                 raise Exception("FAIL - No ip for this network : %s"
                             % server.networks)
         for pair in itertools.permutations(ip_pk):
-            LOG.info("Checking ssh between %s %s"
-                     % (pair[0][0], pair[1][0]))
             self._ssh_through_gateway(pair[0], pair[1])
             LOG.info("Checking ping between %s %s"
                      % (pair[0][0], pair[1][0]))
             self._ping_through_gateway(pair[0], pair[1])
-        LOG.info("test finished, tearing down now ....")
+
+    @test.attr(type='smoke')
+    @test.services('compute', 'network')
+    def test_network_basic_multi_security_group(self):
+        vm3  = self._create_vm3_and_sg1()
+        # we get the access point server
+        ap_details = self.access_point.keys()[0]
+        networks = ap_details.networks
+        for server in self.servers:
+            name = server.networks.keys()[0]
+            if any(i in networks.keys() for i in server.networks.keys()):
+                remote_ip = server.networks[name][0]
+                pk = self.servers[server].private_key
+            else:
+                LOG.info("FAIL - No ip connectivity to the server ip: %s"
+                         % server.networks[name][0])
+                raise Exception("FAIL - No ip for this network : %s"
+                            % server.networks)
+            self._ping_through_gateway((remote_ip, pk), vm3.networks.values()[0], should_fail=True)
+
+
+
+
+
+

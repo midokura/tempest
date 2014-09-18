@@ -273,6 +273,8 @@ class Client(SocketServer.BaseRequestHandler):
                 err_data += err_chunk,
             if channel.closed and not err_chunk and not out_chunk:
                 break
+            # hack for avoiding unexpected hung
+            time.sleep(0.1)
         exit_status = channel.recv_exit_status()
         if 0 != exit_status:
             raise exceptions.SSHExecCommandFailed(
