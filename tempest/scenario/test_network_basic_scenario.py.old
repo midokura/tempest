@@ -20,13 +20,11 @@ from tempest.common.utils import data_utils
 from tempest import config
 from tempest.openstack.common import log as logging
 from tempest.scenario import manager
-from neutronclient.common.exceptions import NeutronClientException
 #from tempest.services.network import resources as net_resources
 from tempest import test
 
 import yaml
 import os
-from pprint import pprint
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -48,52 +46,61 @@ class TestNetworkBasicScenario(manager.NetworkScenarioTest):
             cls.enabled = False
             raise cls.skipException(msg)
 
-    def _setup_topology(self, yaml_topology):
-        with open(yaml_topology,'r') as yaml_topology:
+    def _setup_topology(
+            self,
+            yaml_topology='./network_scenarios/scenario.yaml'):
+        from pprint import pprint
+
+        with open(yaml_topology, 'r') as yaml_topology:
             topology = yaml.load(yaml_topology)
-            networks = [n for n in topology['networks']]
-            routers = []
-            for network in networks:
-                network_body = dict(
-                        network= dict (
-                            name=network['name'],
-                            tenant_id=self.tenant_id
-                            ),
-                        )
-                net = self._create_network_from_body(body=network_body)
-                for subnet in network['subnets']:
-                    for router in subnet['routers']:
-                        router_body = {
-                                'router':{
-                                    'name': router['name'],
-                                    'admin_state_up': True,
-                                    'tenant_id': self.tenant_id
-                                    }
-                                }
-                        router_names =[r['name'] for r in
-                                self.network_client.list_routers()['routers']]
-                        if not router['name'] in router_names:
-                            router = self._create_router_from_body(router_body)
-                            routers.append(router)
-                    subnet_body = dict(
+            pprint(topology)
+            for net in topology['networks']:
+                body = dict(
+                    network=dict(
+                        name=net['name'],
+                        tenant_id=self.tenant_id
+                    ),
+                )
+                network = self._create_network_from_body(body)
+                for snet in net['subnets']:
+                    routers = self._list_routers()
+                    subnet_routers = []
+                    for srouter in snet['routers']:
+                        body = dict(
+                                router=dict(
+                                    name=srouter['name'],
+                                    admin_state_up=True,
+                                    tenant_id=self.tenant_id
+                                    )
+                                )
+                        import ipdb
+                        ipdb.set_trace()
+                        for r in routers:
+                            if r['name'] != srouter['name']:
+                                router = self._create_router_from_body(body)
+                                subnet_routers.append(router)
+                            else:
+                                subnet_routers.append(r)
+                    body = dict(
                             subnet = dict(
-                                name=subnet['name'],
+                                name=snet['name'],
                                 ip_version=4,
-                                network_id=net.id,
+                                network_id=network.id,
                                 tenant_id=self.tenant_id,
-                                cidr=subnet['cidr'],
-                                enable_dhcp=subnet['enable_dhcp'],
-                                dns_nameservers=subnet['dns_nameservers'],
-                                allocation_pools=subnet['allocation_pools']
+                                cidr=snet['cidr'],
+                                enable_dhcp=snet['enable_dhcp'],
+                                dns_nameservers=snet['dns_nameservers'],
+                                allocation_pools=snet['allocation_pools']
                                 )
                             )
-                    subnet = self._create_subnet_from_body(subnet_body)
-                    for router in routers:
+                    subnet = self._create_subnet_from_body(body)
+                    for router in subnet_routers:
                         subnet.add_to_router(router)
             for secgroup in topology['security_groups']:
                 sg = self._create_security_group_neutron(self.tenant_id)
-                rules = self._create_security_group_rule_list(rule_dict=secgroup,
-                        secgroup=sg)
+                rules =  self._create_security_group_rule_list(rule_dict=secgroup,
+                        secgroup=sg.id)
+
 
     def _create_network_from_body(self, body):
         result =  self.network_client.create_network(body=body)
@@ -118,21 +125,19 @@ class TestNetworkBasicScenario(manager.NetworkScenarioTest):
         return subnet
 
     def _create_security_group_rule_list(self, rule_dict=None, secgroup=None):
-        client = self.network_client
+        client = self.network_client()
         rules = []
         if not rule_dict:
             rulesets = []
         else:
-            rulesets = rule_dict['security_group_rules']
+            rulesets = rule_dict
         for ruleset in rulesets:
-            import ipdb
-            ipdb.set_trace()
             for r_direction in ['ingress', 'egress']:
                 ruleset['direction'] = r_direction
                 try:
                     sg_rule = self._create_security_group_rule(
                             client=client, secgroup=secgroup, **ruleset)
-                except NeutronClientException as ex:
+                except exc.NeutronClientException as ex:
                     if not (ex.status_code is 409 and 'Security group rule'
                             ' already exists' in ex.message):
                         raise ex
@@ -143,4 +148,4 @@ class TestNetworkBasicScenario(manager.NetworkScenarioTest):
 
     @test.services('compute', 'network')
     def test_topology(self):
-        self._setup_topology('./network_scenarios/scenario.yaml')
+        self._setup_topology()
