@@ -13,9 +13,6 @@
 __author__ = 'Albert'
 __email__ = "albert.vico@midokura.com"
 
-import threading
-import time
-
 from tempest.openstack.common import log as logging
 from tempest.scenario.midokura.midotools import helper
 from tempest.scenario.midokura.midotools import scenario
@@ -132,10 +129,6 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
             LOG.info(inst.args)
             raise
 
-    def _stop_threads(self):
-        while threading.active_count() > 1:
-                    time.sleep(0.1)
-
     @test.attr(type='smoke')
     @test.services('compute', 'network')
     def test_network_basic_dhcp_lease_full(self):
@@ -161,7 +154,6 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                 raise Exception("FAIL - No ip for this network : %s"
                                 % server.networks)
         LOG.info("test finished, tearing down now ....")
-        self._stop_threads()
 
     @test.attr(type='smoke')
     @test.services('compute', 'network')
@@ -185,7 +177,6 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                 raise Exception("FAIL - No ip for this network : %s"
                                 % server.networks)
         LOG.info("test finished, tearing down now ....")
-        self._stop_threads()
 
     @test.attr(type='smoke')
     @test.services('compute', 'network')
@@ -209,4 +200,3 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                 raise Exception("FAIL - No ip for this network : %s"
                                 % server.networks)
         LOG.info("test finished, tearing down now ....")
-        self._stop_threads()

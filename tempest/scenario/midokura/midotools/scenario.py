@@ -317,21 +317,6 @@ class TestScenario(manager.NetworkScenarioTest):
         self._create_security_group_rule(secgroup=sg,
                                          tenant_id=self.tenant_id,
                                          **rules)
-    # should be deprecated
-    def _create_custom_security_group(self, name):
-        client = self.compute_client
-        # Create security group
-        sg_name = name
-        sg_desc = sg_name + " description"
-        secgroup = client.security_groups.create(sg_name, sg_desc)
-        self.assertEqual(secgroup.name, sg_name)
-        self.assertEqual(secgroup.description, sg_desc)
-        self.addCleanup(self.delete_wrapper, secgroup)
-
-        # Add rules to the security group
-        self._create_loginable_secgroup_rule_nova(client, secgroup.id)
-
-        return secgroup
 
     def _create_and_associate_floating_ips(self):
         public_network_id = CONF.network.public_network_id
