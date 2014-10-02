@@ -90,8 +90,6 @@ class AdvancedNetworkScenarioTest(manager.NetworkScenarioTest):
         else:
             rulesets = rule_dict['security_group_rules']
         for ruleset in rulesets:
-            import ipdb
-            ipdb.set_trace()
             for r_direction in ['ingress', 'egress']:
                 ruleset['direction'] = r_direction
                 try:
