@@ -38,21 +38,25 @@ class TestAdminStateUp(scenario.TestScenario):
 
     def _scenario_conf(self):
         serverA = {
-            'floating_ip': True
+            'floating_ip': True,
+            'sg': None,
+        }
+        routerA = {
+            "public": True,
+            "name": "router_1"
         }
         subnetA = {
             "network_id": None,
             "ip_version": 4,
             "cidr": CIDR1,
             "allocation_pools": None,
-            "routers": None,
+            "routers": [routerA],
             "dns": [],
             "routes": [],
         }
         networkA = {
             'subnets': [subnetA],
             'servers': [serverA],
-            'router': True
         }
         tenantA = {
             'networks': [networkA],
@@ -65,12 +69,20 @@ class TestAdminStateUp(scenario.TestScenario):
             'tenants': [tenantA],
         }
 
+    def _check_connection(self, should_connect=True):
+        ssh_login = CONF.compute.image_ssh_user
+        floating_ip, server = self.floating_ip_tuple
+        ip_address = floating_ip.floating_ip_address
+        private_key = self.servers[server].private_key
+        self._check_public_network_connectivity(
+            ip_address, ssh_login, private_key, should_connect)
+
     def _check_vm_connectivity_router(self):
         for router in self.routers:
             self.network_client.update_router(
                 router.id, {'router': {'admin_state_up': False}})
             LOG.info("router test")
-            self.check_public_network_connectivity(False)
+            self._check_connection(False)
             self.network_client.update_router(
                 router.id, {'router': {'admin_state_up': True}})
 
@@ -79,7 +91,7 @@ class TestAdminStateUp(scenario.TestScenario):
             LOG.info("network test")
             self.network_client.update_network(
                 network.id, {'network': {'admin_state_up': False}})
-            self.check_public_network_connectivity(False)
+            self._check_connection(False)
             self.network_client.update_network(
                 network.id, {'network': {'admin_state_up': True}})
 
@@ -89,22 +101,31 @@ class TestAdminStateUp(scenario.TestScenario):
         port_id = floating_ip.get("port_id")
         self.network_client.update_port(
             port_id, {'port': {'admin_state_up': False}})
-        self.check_public_network_connectivity(False)
+        self._check_connection(False)
         self.network_client.update_port(
             port_id, {'port': {'admin_state_up': True}})
 
     @test.attr(type='smoke')
     @test.services('compute', 'network')
-    def test_network_adminstateup(self):
+    def test_network_adminstateup_router(self):
         LOG.info("Starting Router test")
         self._check_vm_connectivity_router()
-        self.check_public_network_connectivity(True)
+        self._check_connection(True)
         LOG.info("End of Rotuer test")
+
+
+    @test.attr(type='smoke')
+    @test.services('compute', 'network')
+    def test_network_adminstateup_network(self):
         LOG.info("Starting Network test")
         self._check_vm_connectivity_net()
-        self.check_public_network_connectivity(True)
+        self._check_connection(True)
         LOG.info("End of Net test")
+
+    @test.attr(type='smoke')
+    @test.services('compute', 'network')
+    def test_network_adminstateup_port(self):
         LOG.info("Starting Port test")
         self._check_vm_connectivity_port()
         LOG.info("End of Port test")
-        self.check_public_network_connectivity(True)
+        self._check_connection(True)

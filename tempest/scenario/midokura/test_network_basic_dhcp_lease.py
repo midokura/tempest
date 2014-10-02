@@ -13,7 +13,6 @@
 __author__ = 'Albert'
 __email__ = "albert.vico@midokura.com"
 
-
 from tempest.openstack.common import log as logging
 from tempest.scenario.midokura.midotools import helper
 from tempest.scenario.midokura.midotools import scenario
@@ -63,6 +62,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
     def _scenario_conf(self):
         serverB = {
             'floating_ip': False,
+            'sg': None,
         }
         subnetA = {
             "network_id": None,
@@ -117,7 +117,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
             LOG.info(inst.args)
             raise
 
-    def _get_udhcp_pid(self, remote_ip,pk):
+    def _do_dhcp_lease(self, remote_ip,pk):
         try:
             ssh_client = self.setup_tunnel([(remote_ip, pk)])
             pid = ssh_client.exec_command("ps fuax | grep udhcp | "
@@ -129,6 +129,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
             LOG.info(inst.args)
             raise
 
+    @test.attr(type='smoke')
     @test.services('compute', 'network')
     def test_network_basic_dhcp_lease_full(self):
         ap_details = self.access_point.keys()[0]
@@ -143,7 +144,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                 LOG.info("Checking the routes and DNS before the lease")
                 self._check_routes(remote_ip, pk)
                 self._check_dns(remote_ip, pk)
-                self._get_udhcp_pid(remote_ip, pk)
+                self._do_dhcp_lease(remote_ip, pk)
                 LOG.info("Checking the routes and DNS after the lease")
                 self._check_routes(remote_ip, pk)
                 self._check_dns(remote_ip, pk)
@@ -154,6 +155,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                                 % server.networks)
         LOG.info("test finished, tearing down now ....")
 
+    @test.attr(type='smoke')
     @test.services('compute', 'network')
     def test_network_basic_dhcp_lease_dns(self):
         ap_details = self.access_point.keys()[0]
@@ -166,7 +168,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                 pk = self.servers[server].private_key
                 LOG.info("Checking the DNS before the lease")
                 self._check_dns(remote_ip, pk)
-                self._get_udhcp_pid(remote_ip, pk)
+                self._do_dhcp_lease(remote_ip, pk)
                 LOG.info("Checking the DNS after the lease")
                 self._check_dns(remote_ip, pk)
             else:
@@ -176,6 +178,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                                 % server.networks)
         LOG.info("test finished, tearing down now ....")
 
+    @test.attr(type='smoke')
     @test.services('compute', 'network')
     def test_network_basic_dhcp_lease_routes(self):
         ap_details = self.access_point.keys()[0]
@@ -188,7 +191,7 @@ class TestNetworkBasicDhcpLease(scenario.TestScenario):
                 pk = self.servers[server].private_key
                 LOG.info("Checking the DNS before the lease")
                 self._check_routes(remote_ip, pk)
-                self._get_udhcp_pid(remote_ip, pk)
+                self._do_dhcp_lease(remote_ip, pk)
                 LOG.info("Checking the DNS after the lease")
                 self._check_routes(remote_ip, pk)
             else:

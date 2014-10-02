@@ -14,8 +14,9 @@ __email__ = "albert.vico@midokura.com"
 
 
 import itertools
+import threading
+import time
 
-from tempest import exceptions
 from tempest.openstack.common import log as logging
 from tempest.scenario.midokura.midotools import scenario
 from tempest import test
@@ -60,6 +61,7 @@ class TestNetworkBasicInterVMConnectivity(scenario.TestScenario):
     def _scenario_conf(self):
         serverB = {
             'floating_ip': False,
+            'sg': None,
         }
         subnetA = {
             "network_id": None,
@@ -85,33 +87,7 @@ class TestNetworkBasicInterVMConnectivity(scenario.TestScenario):
             'tenants': [tenantA],
         }
 
-    def _ping_through_gateway(self, origin, destination):
-        LOG.info("Trying to ping between %s and %s"
-                 % (origin[0], destination[0]))
-        try:
-            ssh_client = self.setup_tunnel([origin])
-            self.assertTrue(self._check_remote_connectivity(
-                ssh_client, destination[0]))
-        except Exception as inst:
-            LOG.info(inst.args)
-            LOG.info
-            raise
-
-    def _ssh_through_gateway(self, origin, destination):
-        try:
-            ssh_client = self.setup_tunnel([origin,
-                                            destination])
-            try:
-                result = ssh_client.get_ip_list()
-                LOG.info(result)
-                self.assertIn(destination[0], result)
-            except exceptions.SSHExecCommandFailed as e:
-                LOG.info(e.args)
-        except Exception as inst:
-            LOG.info(inst.args)
-            LOG.info
-            raise
-
+    @test.attr(type='smoke')
     @test.services('compute', 'network')
     def test_network_basic_inter_vmssh(self):
         ap_details = self.access_point.keys()[0]
@@ -137,3 +113,5 @@ class TestNetworkBasicInterVMConnectivity(scenario.TestScenario):
                      % (pair[0][0], pair[1][0]))
             self._ping_through_gateway(pair[0], pair[1])
         LOG.info("test finished, tearing down now ....")
+        while threading.active_count() > 1:
+                    time.sleep(0.1)

@@ -16,6 +16,7 @@ import collections
 
 
 from neutronclient.common import exceptions as exc
+from tempest import exceptions
 from tempest.api.network import common as net_common
 from tempest.common.utils import data_utils
 from tempest.common.utils.linux import remote_client
@@ -24,6 +25,7 @@ from tempest.openstack.common import log as logging
 from tempest.scenario import manager
 from tempest.scenario.midokura.midotools import admintools
 from tempest import test
+
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
@@ -74,6 +76,7 @@ class TestScenario(manager.NetworkScenarioTest):
         self.floating_ips = {}
         self.servers = {}
         self.masterkey = None
+        self.security_groups = []
 
     def custom_scenario(self, scenario):
         tenant_id = None
@@ -86,7 +89,6 @@ class TestScenario(manager.NetworkScenarioTest):
                 tenant_id = self._create_tenant()
             if tenant['MasterKey']:
                 self._create_custom_keypairs(tenant_id)
-
             for network in tenant['networks']:
                 network['tenant_id'] = tenant_id
                 cnetwork, subnets, router = \
@@ -100,7 +102,7 @@ class TestScenario(manager.NetworkScenarioTest):
                 for server in network['servers']:
                     name = data_utils.rand_name('server-smoke-')
                     serv_dict = \
-                        self._create_server(name, cnetwork,)
+                        self._create_server(name, cnetwork, server["sg"])
                     self.servers.update({serv_dict['server']:
                                         serv_dict['keypair']})
                     if server['floating_ip']:
@@ -109,19 +111,6 @@ class TestScenario(manager.NetworkScenarioTest):
 
             if tenant['hasgateway']:
                 self._build_gateway(self.tenants[tenant_id])
-
-    def check_public_network_connectivity(self, should_connect=True,
-                                          msg=None):
-        ssh_login = CONF.compute.image_ssh_user
-        floating_ip, server = self.floating_ip_tuple
-        ip_address = floating_ip.floating_ip_address
-        private_key = None
-        if should_connect:
-            private_key = self.servers[server].private_key
-        # call the common method in the parent class
-        super(TestScenario, self)._check_public_network_connectivity(
-            ip_address, ssh_login, private_key, should_connect, msg,
-            self.servers.keys())
 
     # Needs refactor, problems when working with FIPs
     def get_server_ip(self, server=None, isgateway=False, floating=False):
@@ -159,9 +148,11 @@ class TestScenario(manager.NetworkScenarioTest):
             self._create_network(mynetwork['tenant_id'])
         router = None
         subnets = []
+        """
         if mynetwork.get('router'):
             router = \
                 self._get_router(mynetwork['tenant_id'])
+        """
         for mysubnet in mynetwork['subnets']:
             routers = []
             if mysubnet['routers']:
@@ -169,8 +160,11 @@ class TestScenario(manager.NetworkScenarioTest):
                     if not self.internal_routers or not \
                             all(map(lambda x: True if r["name"] in
                                     x.values() else False, self.internal_routers)):
-                        myrouter = \
-                            self._create_custom_router(mynetwork['tenant_id'], name=r["name"])
+                        if r["public"]:
+                            myrouter = self._get_router(mynetwork['tenant_id'])
+                        else:
+                            myrouter = \
+                                self._create_custom_router(mynetwork['tenant_id'], name=r["name"])
                         self.internal_routers.append(myrouter)
                     else:
                         # should have a hit
@@ -277,8 +271,13 @@ class TestScenario(manager.NetworkScenarioTest):
 
         if security_groups is None:
             security_groups = [self.security_group.name]
+
+        if not set(security_groups).issubset(set(self.security_groups)):
+            self.security_groups.extend(security_groups)
         nics = [{'net-id': network.id}, ]
+        # it also has to include all secgroups if its a gw
         if isgateway:
+            security_groups = self.security_groups
             for network in self.networks:
                 nics.append({'net-id': network.id})
         create_kwargs = {
@@ -297,6 +296,27 @@ class TestScenario(manager.NetworkScenarioTest):
             server = self._create_server(name, network)
             self.servers.append(server)
             return server
+
+    def _get_security_group(self, sg_name):
+        client2 = self.compute_client
+        sgs = client2.security_groups.list()
+        secgroup = None
+        for sg in sgs:
+            if sg.name == sg_name:
+                secgroup = sg
+        return secgroup
+
+    def _create_loginale_security_group(self, tenant_id, name="ssh"):
+        sg = self._create_empty_security_group(tenant_id=tenant_id, name=name)
+        rules = {
+            'direction': 'ingress',
+            'port_range_max': 22,
+            'port_range_min': 22,
+            'protocol': 'tcp'
+        }
+        self._create_security_group_rule(secgroup=sg,
+                                         tenant_id=self.tenant_id,
+                                         **rules)
 
     def _create_and_associate_floating_ips(self):
         public_network_id = CONF.network.public_network_id
@@ -323,6 +343,45 @@ class TestScenario(manager.NetworkScenarioTest):
         self.assertEqual(len(ports), 1,
                          "Unable to determine which port to target.")
         return ports[0]['id']
+
+    def _toggle_dhcp(self, subnet_id, enable=False):
+        subnet = {
+            "subnet":{
+                "enable_dhcp": enable,
+            }
+        }
+        result = self.network_client.update_subnet(subnet_id, subnet)
+        subnet = result["subnet"]
+        self.assertEqual(subnet["enable_dhcp"], enable)
+        LOG.debug(result)
+
+    def _ping_through_gateway(self, origin, destination, should_fail=False):
+        LOG.info("Trying to ping between %s and %s"
+                 % (origin[0], destination[0]))
+        try:
+            ssh_client = self.setup_tunnel([origin])
+            self.assertTrue(self._check_remote_connectivity(
+                ssh_client, destination[0]))
+        except Exception as inst:
+            if should_fail:
+                pass
+            else:
+                LOG.info(inst.args)
+                raise
+
+    def _ssh_through_gateway(self, origin, destination):
+        try:
+            ssh_client = self.setup_tunnel([origin,
+                                            destination])
+            try:
+                result = ssh_client.get_ip_list()
+                LOG.info(result)
+                self.assertIn(destination[0], result)
+            except exceptions.SSHExecCommandFailed as e:
+                LOG.info(e.args)
+        except Exception as inst:
+            LOG.info(inst.args)
+            raise
 
     """
     GateWay methods

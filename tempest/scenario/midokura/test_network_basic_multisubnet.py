@@ -40,7 +40,8 @@ class TestBasicMultisubnet(scenario.TestScenario):
 
     def _scenario_conf(self):
         serverA = {
-            'floating_ip': False
+            'floating_ip': False,
+            'sg': None,
         }
         subnetA = {
             "network_id": None,

@@ -1079,7 +1079,7 @@ class NetworkScenarioTest(OfficialClientTest):
         return secgroup
 
     def _create_empty_security_group(self, tenant_id, client=None,
-                                     namestart='secgroup-smoke-'):
+                                     namestart='secgroup-smoke-', name=None):
         """Create a security group without rules.
 
         Default rules will be created:
@@ -1091,7 +1091,10 @@ class NetworkScenarioTest(OfficialClientTest):
         """
         if client is None:
             client = self.network_client
-        sg_name = data_utils.rand_name(namestart)
+        if name:
+            sg_name = name
+        else:
+            sg_name = data_utils.rand_name(namestart)
         sg_desc = sg_name + " description"
         sg_dict = dict(name=sg_name,
                        description=sg_desc)

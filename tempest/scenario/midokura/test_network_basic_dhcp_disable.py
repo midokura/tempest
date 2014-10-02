@@ -1,4 +1,3 @@
-
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -13,53 +12,41 @@
 __author__ = 'Albert'
 __email__ = "albert.vico@midokura.com"
 
+import threading
 import re
-
+import time
 
 from tempest.openstack.common import log as logging
-from tempest.scenario.midokura.midotools import helper
 from tempest.scenario.midokura.midotools import scenario
 from tempest import test
 
-
 LOG = logging.getLogger(__name__)
-CIDR1 = "10.10.1.0/24"
+CIDR1 = "10.10.10.0/24"
 
 
-class TestNetworkBasicVMConnectivity(scenario.TestScenario):
+class TestNetworkBasicDhcpDisable(scenario.TestScenario):
     """
         Scenario:
-        A launched VM should get an ip address and
-        routing table entries from DHCP. And
-        it should be able to metadata service.
-
-        Pre-requisites:
-        1 tenant
-        1 network
-        1 VM
-
+            Ability to disable DHCP
+        Prerequisite:
+            1 tenant
+            1 network
+            1 vm
         Steps:
-        1. create a network
-        2. launch a VM
-        3. verify that the VM gets IP address
-        4. verify that the VM gets default GW
-           in the routing table
-        5. verify that the VM gets a
-           routing entry for metadata service via dhcp agent
-
-        Expected results:
-        vm should get an ip address (confirm by "ip addr" command)
-        VM should get a defaut gw
-        VM should get a route for 169.254.169.254 (on non-cirros )
+            1) spawn the VM
+            2) Disable the DHCP
+            3) try to renew DHCP
+        Expected result:
+            can't renew the dhcp
     """
 
     @classmethod
     def setUpClass(cls):
-        super(TestNetworkBasicVMConnectivity, cls).setUpClass()
+        super(TestNetworkBasicDhcpDisable, cls).setUpClass()
         cls.check_preconditions()
 
     def setUp(self):
-        super(TestNetworkBasicVMConnectivity, self).setUp()
+        super(TestNetworkBasicDhcpDisable, self).setUp()
         self.security_group = \
             self._create_security_group_neutron(tenant_id=self.tenant_id)
         self._scenario_conf()
@@ -75,9 +62,9 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             "ip_version": 4,
             "cidr": CIDR1,
             "allocation_pools": None,
-            "routers": None,
             "dns": [],
             "routes": [],
+            "routers": None,
         }
         networkA = {
             'subnets': [subnetA],
@@ -94,37 +81,43 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             'tenants': [tenantA],
         }
 
-    def _serious_test(self, remote_ip, pk):
-        LOG.info("Trying to get the list of ips")
+    # this should be ported to "linux_client" class
+    def _do_dhcp_lease(self, remote_ip, pk, timeout=0):
         try:
             ssh_client = self.setup_tunnel([(remote_ip, pk)])
-            net_info = ssh_client.get_ip_list()
+            pid = ssh_client.exec_command("ps fuax | grep udhcp | "
+                                          "awk '{print $1}'").split("\n")[0]
+            LOG.info(pid)
+            out = ssh_client.exec_command("sudo kill -USR1 %s" % pid, timeout)
+            LOG.info(out)
+        except Exception as inst:
+            # should give a timeout
+            if "Request timed out" == inst.message:
+                LOG.debug(inst)
+                pass
+            else:
+                raise
+
+    def _get_ip(self, remote_ip, pk, timeout=0, shouldFail=False):
+        try:
+            ssh_client = self.setup_tunnel([(remote_ip, pk)])
+            net_info = ssh_client.get_ip_list(timeout)
             LOG.debug(net_info)
             pattern = re.compile(
                 '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
             list = pattern.findall(net_info)
-            LOG.debug(list)
+            LOG.info(remote_ip)
+            LOG.info(list)
             self.assertIn(remote_ip, list)
-            route_out = ssh_client.exec_command("sudo /sbin/route -n")
-            self._check_default_gateway(route_out, remote_ip)
-            LOG.info(route_out)
-        except Exception as inst:
-            LOG.info(inst.args)
-            raise
-
-    def _check_default_gateway(self, route_out, internal_ip):
-        try:
-            rtable = helper.Routetable.build_route_table(route_out)
-            # TODO(QA): More extended route table tests
-            LOG.debug(rtable)
-            self.assertTrue(any([r.is_default_route() for r in rtable]))
-        except Exception as inst:
-            LOG.info(inst.args)
-            raise
+        except Exception:
+            if shouldFail:
+                pass
+            else:
+                raise
 
     @test.attr(type='smoke')
     @test.services('compute', 'network')
-    def test_network_basic_vmconnectivity(self):
+    def test_network_basic_dhcp_disable(self):
         ap_details = self.access_point.keys()[0]
         networks = ap_details.networks
         for server in self.servers:
@@ -133,10 +126,19 @@ class TestNetworkBasicVMConnectivity(scenario.TestScenario):
             if any(i in networks.keys() for i in server.networks.keys()):
                 remote_ip = server.networks[name][0]
                 pk = self.servers[server].private_key
-                self._serious_test(remote_ip, pk)
+                LOG.info("Checking the IP before the lease")
+                # get the ip
+                self._get_ip(remote_ip, pk)
+                subn = self.subnets[0]
+                self._toggle_dhcp(subnet_id=subn["id"])
+                # should give timeout
+                self._do_dhcp_lease(remote_ip, pk, 20)
+                self._get_ip(remote_ip, pk, 10, True)
             else:
                 LOG.info("FAIL - No ip connectivity to the server ip: %s"
                          % server.networks[name][0])
                 raise Exception("FAIL - No ip for this network : %s"
                                 % server.networks)
         LOG.info("test finished, tearing down now ....")
+        while threading.active_count() > 1:
+                    time.sleep(0.1)

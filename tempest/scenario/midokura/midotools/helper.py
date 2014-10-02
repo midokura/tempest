@@ -15,22 +15,22 @@ __email__ = "albert.vico@midokura.com"
 
 class Routetable:
 
-    def __init__(cls, *args):
-        cls.destination = None
-        cls.gateway = None
-        cls.genmask = None
-        cls.flags = None
-        cls.metric = None
-        cls.ref = None
-        cls.use = None
-        cls.iface = None
+    def __init__(self, *args):
+        self.destination = None
+        self.gateway = None
+        self.genmask = None
+        self.flags = None
+        self.metric = None
+        self.ref = None
+        self.use = None
+        self.iface = None
         if len(args) is 1:
-            cls.init_from_line(args[0])
+            self.init_from_line(args[0])
             return
 
-        (cls.destination, cls.gateway, cls.iface) = args
+        (self.destination, self.gateway, self.iface) = args
         if len(args) > 3:
-            cls.genmask = args[3]
+            self.genmask = args[3]
 
     def init_from_line(self, line):
         """
