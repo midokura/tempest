@@ -111,7 +111,7 @@ class TestNetworkBasicSecurityGroups(scenario.TestScenario):
     def _create_vm3_and_sg1(self):
         # creates the vm3 and assigns it sc "sg1"
         net = self.networks[0]
-        sg = self._create_custom_security_group("sg1")
+        sg = self._create_empty_security_group(tenant_id=self.tenant_id, name="sg1")
         server = self._create_server("vm3", net, security_groups=[sg.name])['server']
         return server
 
