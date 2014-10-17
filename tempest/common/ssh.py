@@ -255,13 +255,13 @@ class Client(SocketServer.BaseRequestHandler):
         start_time = time.time()
         LOG.info("executing cmd: %s" % cmd)
         while True:
-            ready = poll.poll(self.channel_timeout)
-            if not any(ready) or cmd_timeout is not 0:
-                if not self._is_timed_out(start_time, cmd_timeout):
-                    continue
+            if self._is_timed_out(start_time, cmd_timeout):
                 raise exceptions.TimeoutException(
                     "Command: '{0}' executed on host '{1}'.".format(
                         cmd, self.host))
+            ready = poll.poll(self.channel_timeout)
+            if not any(ready):
+                    continue
             if not ready[0]:  # If there is nothing to read.
                 continue
             out_chunk = err_chunk = None
