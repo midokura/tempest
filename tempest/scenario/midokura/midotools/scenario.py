@@ -361,7 +361,7 @@ class TestScenario(manager.NetworkScenarioTest):
         try:
             ssh_client = self.setup_tunnel([origin])
             self.assertTrue(self._check_remote_connectivity(
-                ssh_client, destination[0]))
+                ssh_client, destination[0], should_succeed=not should_fail))
         except Exception as inst:
             if should_fail:
                 pass
