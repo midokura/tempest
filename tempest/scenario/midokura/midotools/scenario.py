@@ -437,7 +437,7 @@ class TestScenario(manager.NetworkScenarioTest):
                     is not "up\n":
                 try:
                     result = access_point_ssh.exec_command(
-                        "sudo /sbin/udhcpc -i eth{0}".format(net), 30)
+                            "sudo /sbin/cirros-dhcpc up eth{0}".format(net), 30)
                     LOG.info(result)
                 except Exception:
                     pass
