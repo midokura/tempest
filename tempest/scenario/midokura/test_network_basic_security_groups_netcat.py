@@ -61,7 +61,14 @@ class TestNetworkBasicSecurityGroupsNetcat(
         result = ssh_server.exec_command("cat test.txt")
         return result
 
-    def _test_netcat(self, source, destination):
+    def _netcat_test_udp(self, ip_server, ssh_server, ssh_client):
+        ssh_server.exec_command("nc -lu -p 50000 > test.txt &")
+        ssh_client.exec_command("echo '123' > send.txt")
+        ssh_client.exec_command("nc -u %s 50000 < send.txt &" % ip_server, 20)
+        result = ssh_server.exec_command("cat test.txt")
+        return result
+
+    def _test_netcat(self, source, destination, udp=False):
         ap_details = self.servers_and_keys[-1]
         hop = [(ap_details['FIP'].floating_ip_address,
                 ap_details['keypair']['private_key'])]
@@ -69,9 +76,25 @@ class TestNetworkBasicSecurityGroupsNetcat(
         s_hops = hop + [source]
         ssh_client = self.setup_tunnel(d_hops)
         ssh_server = self.setup_tunnel(s_hops)
-        result = self._netcat_test(source[0], ssh_server, ssh_client)
+        if udp:
+            result = self._netcat_test_udp(source[0], ssh_server, ssh_client)
+        else:
+            result = self._netcat_test(source[0], ssh_server, ssh_client)
         LOG.info(result)
         self.assertEqual("123\n", result)
+
+
+    @test.attr(type='smoke')
+    @test.services('compute', 'network')
+    def test_network_basic_netcat_udp(self):
+        # we get the access point server
+        vm1_server = self.servers_and_keys[0]['server']
+        vm2_server = self.servers_and_keys[1]['server']
+        vm1_pk = self.servers_and_keys[0]['keypair']['private_key']
+        vm2_pk = self.servers_and_keys[0]['keypair']['private_key']
+        vm1 = (vm1_server['addresses'].values()[0][0]['addr'], vm1_pk)
+        vm2 = (vm2_server['addresses'].values()[0][0]['addr'], vm2_pk)
+        self._test_netcat(vm1, vm2, udp=True)
 
     @test.attr(type='smoke')
     @test.services('compute', 'network')
