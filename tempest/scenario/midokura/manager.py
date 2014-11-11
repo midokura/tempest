@@ -16,6 +16,7 @@
 import yaml
 import os
 
+from tempest import clients
 from tempest import exceptions
 from neutronclient.common import exceptions as NeutronClientException
 from tempest.common.utils import data_utils
@@ -24,6 +25,7 @@ from tempest import config
 from tempest.openstack.common import log
 from tempest.scenario import manager
 from tempest.services.network import resources as net_resources
+from tempest.scenario.midokura.midotools import admintools
 
 CONF = config.CONF
 LOG = log.getLogger(__name__)
@@ -36,8 +38,19 @@ class AdvancedNetworkScenarioTest(manager.NetworkScenarioTest):
 
     @classmethod
     def setUpClass(cls):
-        cls.set_network_resources()
         super(AdvancedNetworkScenarioTest, cls).setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            super(AdvancedNetworkScenarioTest, cls).tearDownClass()
+        finally:
+            cls.clear_creds()
+
+    @classmethod
+    def clear_creds(cls):
+        TA = admintools.TenantAdmin()
+        TA.teardown_tenants()
 
     """
     Creation Methods
@@ -89,14 +102,16 @@ class AdvancedNetworkScenarioTest(manager.NetworkScenarioTest):
             'networks': nics,
             'key_name': keypair['name'],
             'security_groups': security_groups,
+            'tenant_id': self.tenant_id,
         }
         server = self.create_server(name=name,
                                     create_kwargs=create_kwargs)
         FIP = None
         if has_FIP:
             network_names = self._get_network_by_name(networks[0]['name'])
-            FIP = self._assign_floating_ip(server=server,
-                                           network_name=network_names[0]['name'])
+            FIP = self._assign_floating_ip(
+                   server=server,
+                   network_name=network_names[0]['name'])
 
         return dict(server=server, keypair=keypair, FIP=FIP)
 
@@ -158,8 +173,8 @@ class AdvancedNetworkScenarioTest(manager.NetworkScenarioTest):
                     is not 'up\n':
                 try:
                     result = access_point_ssh.exec_command(
-                                    "sudo /sbin/cirros-dhcpc up eth{0}".format(net), 
-                                    10)
+                        "sudo /sbin/cirros-dhcpc up eth{0}".format(net), 
+                        10)
                     LOG.info(result)
                 except exceptions.TimeoutException:
                     pass
@@ -199,11 +214,23 @@ class AdvancedNetworkScenarioTest(manager.NetworkScenarioTest):
     """
     Get Methods
     """
+    def _get_tenant(self, tenant):
+        TA = admintools.TenantAdmin()
+        _tenant = None
+        _creds = None
+        _tenant = TA.get_tenant_by_name(tenant['name'])
+        if _tenant is None:
+            _tenant, _creds  = TA.tenant_create_enabled(name=tenant['name'],
+                                              desc=tenant['description'])
+        else:
+            _creds = TA.admin_credentials(_tenant)
+        return _tenant, _creds
+
     def _get_tenant_security_groups(self, tenant=None):
         if not tenant:
             tenant = self.tenant_id
         client = self.network_client
-        _, sgs = client.list_security_groups()
+        _, sgs = client.list_security_groups(tenant_id=tenant)
         return sgs['security_groups']
 
     def _get_tenant_networks(self, tenant=None):
@@ -247,6 +274,16 @@ class AdvancedNetworkScenarioTest(manager.NetworkScenarioTest):
     """
     Tool methods
     """
+    def set_context(self, credentials):
+        self.mymanager = clients.Manager(credentials=credentials)
+        self.floating_ips_client = self.mymanager.floating_ips_client
+        self.keypairs_client = self.mymanager.keypairs_client
+        self.networks_client = self.mymanager.networks_client
+        self.security_groups_client = self.mymanager.security_groups_client
+        self.servers_client = self.mymanager.servers_client
+        self.interface_client = self.mymanager.interfaces_client
+        self.network_client = self.mymanager.network_client
+
     def _toggle_dhcp(self, subnet_id, enable=False):
         _, result = self.network_client.update_subnet(subnet_id, enable_dhcp=enable)
         subnet = result["subnet"]
@@ -282,74 +319,93 @@ class AdvancedNetworkScenarioTest(manager.NetworkScenarioTest):
     """
     YAML parsing methods
     """
+    def _setup_topology(self, topology, tenant_id=None):
+        if tenant_id:
+            self.tenant_id = tenant_id
+        networks = [n for n in topology['networks']]
+        for network in networks:
+            net = self._create_network(client=self.network_client,
+                                       tenant_id=self.tenant_id,
+                                       namestart=network['name'])
+            for subnet in network['subnets']:
+                routers = []
+                for router in subnet['routers']:
+                    router_names = [r['name'] for r in
+                                   self._get_tenant_routers()]
+                    if not any(map(lambda x: router['name'] in x,
+                        router_names)):
+                        if router['public']:
+                            router = self._get_router(
+                                        client=self.network_client,
+                                        tenant_id=self.tenant_id)
+                        else:
+                            router = self._create_router(
+                                        namestart=router['name'],
+                                        tenant_id=self.tenant_id)
+                    else:
+                        router = \
+                        self._get_tenant_router_by_name(router['name'])
+                    routers.append(router)
+                subnet_dic = \
+                    dict(
+                        name=subnet['name'],
+                        ip_version=4,
+                        network_id=net.id,
+                        tenant_id=self.tenant_id,
+                        cidr=subnet['cidr'],
+                        dns_nameservers=subnet['dns_nameservers'],
+                        host_routes=subnet['host_routes'],
+                    )
+                subnet = self._create_subnet(network=net, **subnet_dic)
+
+                for router in routers:
+                    subnet.add_to_router(router.id)
+
+        for secgroup in topology['security_groups']:
+            sgroups = self._get_tenant_security_groups(self.tenant_id)
+            if secgroup['name'] in [r['name'] for r in sgroups]:
+                sg = filter(lambda x: x['name'].startswith(secgroup['name']), sgroups)[0]
+            else:
+                sg = self._create_empty_security_group(tenant_id=self.tenant_id,
+                                                       namestart=secgroup['name'])
+                rules = \
+                    self._create_security_group_rule_list(rule_dict=secgroup,
+                                                          secgroup=sg)
+        test_topology = []
+        for server in topology['servers']:
+            s_nets = []
+            for snet in server['networks']:
+                s_nets.extend(self._get_network_by_name(snet['name']))
+            s_sg = []
+            for sg in server['security_groups']:
+                s_sg.append(self._get_security_group_by_name(sg['name']))
+            for x in range(server['quantity']):
+                name = data_utils.rand_name('server-smoke-')
+                test_topology.append(self._create_server(name=name,
+                                                         networks=s_nets,
+                                                         security_groups=s_sg,
+                                                         has_FIP=server['floating_ip']))
+        if 'gateway' in topology.keys() and topology['gateway']:
+            test_topology.append(self.build_gateway(self.tenant_id))
+
+        return test_topology
+
     def setup_topology(self, yaml_topology):
         mpath = self._locate_file(yaml_topology.split('/')[-2])
         fullpath = os.path.join(mpath, yaml_topology.split('/')[-1])
         with open(fullpath, 'r') as yaml_topology:
             topology = yaml.load(yaml_topology)
-            networks = [n for n in topology['networks']]
-            for network in networks:
-                net = self._create_network(tenant_id=self.tenant_id,
-                                           namestart=network['name'])
-                for subnet in network['subnets']:
-                    routers = []
-                    for router in subnet['routers']:
-                        router_names = [r['name'] for r in
-                                       self._get_tenant_routers()]
-                        if not any(map(lambda x: router['name'] in x,
-                            router_names)):
-                            if router['public']:
-                                router = self._get_router(
-                                        client=self.network_client,
-                                        tenant_id=self.tenant_id)
-                            else:
-                                router = self._create_router(
-                                        namestart=router['name'],
-                                        tenant_id=self.tenant_id)
-                        else:
-                            router = \
-                            self._get_tenant_router_by_name(router['name'])
-                        routers.append(router)
-                    subnet_dic = \
-                        dict(
-                            name=subnet['name'],
-                            ip_version=4,
-                            network_id=net.id,
-                            tenant_id=self.tenant_id,
-                            cidr=subnet['cidr'],
-                            dns_nameservers=subnet['dns_nameservers'],
-                            host_routes=subnet['host_routes'],
-                        )
-                    subnet = self._create_subnet(network=net, **subnet_dic)
-                    
-                    for router in routers:
-                        subnet.add_to_router(router.id)
-
-            for secgroup in topology['security_groups']:
-                sgroups = self._get_tenant_security_groups(self.tenant_id)
-                if secgroup['name'] in [r['name'] for r in sgroups]:
-                    sg = filter(lambda x: x['name'].startswith(secgroup['name']), sgroups)[0]
-                else:
-                    sg = self._create_empty_security_group(tenant_id=self.tenant_id,
-                                                           namestart=secgroup['name'])
-                    rules = \
-                        self._create_security_group_rule_list(rule_dict=secgroup,
-                                                              secgroup=sg)
-            test_topology = []
-            for server in topology['servers']:
-                s_nets = []
-                for snet in server['networks']:
-                    s_nets.extend(self._get_network_by_name(snet['name']))
-                s_sg = []
-                for sg in server['security_groups']:
-                    s_sg.append(self._get_security_group_by_name(sg['name']))
-                for x in range(server['quantity']):
-                    name = data_utils.rand_name('server-smoke-')
-                    test_topology.append(self._create_server(name=name,
-                                                           networks=s_nets,
-                                                           security_groups=s_sg,
-                                                           has_FIP=server['floating_ip']))
-            if 'gateway' in topology.keys() and topology['gateway']:
-                test_topology.append(self.build_gateway(self.tenant_id))
-
-            return test_topology
+            scenario = list()
+            if 'tenants' in topology.keys():
+                for tenant in topology['tenants']:
+                    _tenant, creds = self._get_tenant(tenant)
+                    self.set_context(creds)
+                    topo =  [x for x in topology['scenarios'] \
+                                 if x['name'] == tenant['scenario']][0]
+                    scenario.append(dict(credentials=creds,
+                                         servers_and_keys=self._setup_topology(
+                                             topo,
+                                             tenant_id=_tenant['id'])))
+            else:
+                scenario = self._setup_topology(topology)
+        return scenario
