@@ -41,7 +41,7 @@ class TestAdminStateUp(manager.AdvancedNetworkScenarioTest):
         floating_ip = self.servers_and_keys[0]['FIP']
         ip_address = floating_ip.floating_ip_address
         private_key = self.servers_and_keys[0]['keypair']['private_key']
-        self._check_public_network_connectivity(
+        self.check_public_network_connectivity(
             ip_address, ssh_login, private_key, should_connect)
 
     def _check_vm_connectivity_router(self):

@@ -82,7 +82,7 @@ class AdvancedNetworkScenarioTest(manager.NetworkScenarioTest):
         server_ip = server['addresses'][network_name][0]['addr']
         port_id = self._get_custom_server_port_id(server,
                                                   ip_addr=server_ip)
-        floating_ip = self._create_floating_ip(server,
+        floating_ip = self.create_floating_ip(server,
                                                public_network_id,
                                                port_id=port_id)
         return floating_ip
