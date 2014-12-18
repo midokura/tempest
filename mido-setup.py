@@ -1,13 +1,13 @@
 # Ensure cirros 0.3.3 is the image in tempest
 # Ensure that allow overlapping tenants is set to false?
-# tempest.con is configured properly, and tenants are clean
+# tempest.conf is configured properly, and tenants are clean
 
 import glanceclient.v2.client as glclient
 import keystoneclient.v2_0.client as ksclient
 import os
 import pip
 
-from pkg_resources import WorkingSet , DistributionNotFound 
+from pkg_resources import WorkingSet, DistributionNotFound
 try:
     working_set = WorkingSet()
     dep = working_set.require('SimpleConfigParser')
