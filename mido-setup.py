@@ -109,15 +109,13 @@ def fix_tempest_conf(network_client):
     
     # get neutron suported extensions
     _, extensions_dict = network_client.list_extensions()
-    extensions = [x['name'] for x in extensions_dict['extensions']]
-    print(extensions) 
+    extensions = [x['alias'] for x in extensions_dict['extensions']]
     # setup network extensions
     to_string = ""
     for ex in extensions[:-1]:
 	to_string = str.format("{0},{1}", ex, to_string)
     to_string = str.format("{0}{1}", to_string, extensions[-1])
 
-    print(CONF.network_feature_enabled.api_extensions)
     if CONF.network_feature_enabled.api_extensions != to_string:
         # modify tempest.conf file
         config.set('network-feature-enabled',
