@@ -8,11 +8,14 @@ import os
 import pip
 
 from pkg_resources import WorkingSet, DistributionNotFound
+
 try:
     working_set = WorkingSet()
     dep = working_set.require('SimpleConfigParser')
 except DistributionNotFound:
     pip.main(['install', 'SimpleConfigParser'])
+
+from simpleconfigparser import simpleconfigparser
 from tempest import clients
 from tempest.scenario.midokura.midotools import admintools
 from tempest import config
@@ -28,7 +31,6 @@ def main():
     tenant = admin.get_tenant_by_name(tenant_name)
     credentials = admin.admin_credentials(tenant)
     network_client, image_client, glance_client = set_context(credentials)
-
     # Start to config
     fix_cirros(glance_client, image_client)
     fix_tempest_conf(network_client)
@@ -99,20 +101,25 @@ def fix_tempest_conf(network_client):
     if not os.path.isfile(_path):
         raise Exception("No config file in %s", _path)
 
-    config = simpleconfigparser()
-    config.read(_path)
-
+    try:
+    	config = simpleconfigparser()
+    	config.read(_path)
+    except Exception as e:
+        print(str(e))
+    
     # get neutron suported extensions
     _, extensions_dict = network_client.list_extensions()
     extensions = [x['name'] for x in extensions_dict['extensions']]
-
+    print(extensions) 
     # setup network extensions
-    if CONF.network_feature_enabled.api_extensions != extensions:
+    to_string = ""
+    for ex in extensions[:-1]:
+	to_string = str.format("{0},{1}", ex, to_string)
+    to_string = str.format("{0}{1}", to_string, extensions[-1])
+
+    print(CONF.network_feature_enabled.api_extensions)
+    if CONF.network_feature_enabled.api_extensions != to_string:
         # modify tempest.conf file
-        to_string = ""
-        for ex in extensions[:-1]:
-            to_string = str.format("{0},{1}", ex, to_string)
-        to_string = str.format("{0}{1}", to_string, extensions[-1])
         config.set('network-feature-enabled',
                    'api_extensions', to_string)
 
