@@ -29,7 +29,7 @@ scenarios:
     networks:
     - name: netA
     floating_ip: False
-    quantity: 2
+    quantity: 1
 
   networks:
   - name: netA
